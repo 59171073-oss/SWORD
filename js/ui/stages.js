@@ -5,7 +5,7 @@
         var total = 0;
         for (var i = 0; i < enemies.length; i++) {
             var s = enemies[i].stats;
-            total += s.hp + s.atk + s.def + s.spd;
+            total += s.hp + s.atk + s.def + (s.spd || s.agi);
         }
         return total;
     }
@@ -155,8 +155,8 @@
             var rarityInfo = RARITY[e.rarity];
             var elementIcon = ELEMENT_ICONS[e.element] || '';
 
-            html += '<div style="width:70px;text-align:center;padding:6px 4px;background:rgba(0,0,0,0.3);border:1px solid ' + (rarityInfo ? rarityInfo.color : 'var(--border-ancient)') + ';border-radius:var(--radius-sm);">';
-            html += '<div style="font-size:20px;margin-bottom:2px;">' + (classInfo ? classInfo.icon : '❓') + '</div>';
+            html += '<div style="width:70px;text-align:center;padding:6px 4px;background:rgba(0,0,0,0.2);border:1px solid ' + (rarityInfo ? rarityInfo.color : 'var(--border-ancient)') + ';border-radius:var(--radius-sm);">';
+            html += '<div style="font-size:28px;margin-bottom:2px;">' + (classInfo ? classInfo.icon : '❓') + '</div>';
             html += '<div style="font-size:10px;color:var(--parchment);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + e.name + '</div>';
             html += '<div style="font-size:9px;color:var(--cyan-gray);">' + (classInfo ? classInfo.name : '') + '</div>';
             html += '<div style="font-size:9px;">' + elementIcon + ' ' + e.element + '</div>';
@@ -196,7 +196,7 @@
                 html += '<div style="font-size:11px;color:var(--cyan-gray);margin-bottom:4px;">条件：' + taskCard.condition + '</div>';
                 html += '<div style="font-size:11px;color:var(--gold);">奖励：';
                 if (taskCard.reward.gold) html += '💰 ' + taskCard.reward.gold;
-                if (taskCard.reward.cardRarity) html += '🎁 ' + RARITY[taskCard.reward.cardRarity].name + '卡牌';
+                if (taskCard.reward.cardRarity) html += '🎴 ' + RARITY[taskCard.reward.cardRarity].name + '卡牌';
                 html += '</div>';
                 html += '</div>';
             }
@@ -229,6 +229,23 @@
         if (onConfirm) {
             var confirmBtn = document.getElementById('modal-confirm-btn');
             if (confirmBtn) confirmBtn.textContent = confirmText;
+            
+            var cancelBtn = document.getElementById('modal-cancel-btn');
+            if (isCleared && cancelBtn) {
+                cancelBtn.textContent = '快速通关';
+                cancelBtn.style.background = 'linear-gradient(180deg,#1e8449,#145a32)';
+                cancelBtn.style.borderColor = '#2ecc71';
+                cancelBtn.onclick = function () {
+                    var result = GameState.quickClearStage(stageId);
+                    if (result && result.success) {
+                        window.showToast('快速通关成功！获得 💰' + result.reward.gold);
+                        window.updateStatusBar();
+                        window.hideModal();
+                    } else if (result) {
+                        window.showToast(result.message || '快速通关失败', 'error');
+                    }
+                };
+            }
         }
     }
 

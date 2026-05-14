@@ -276,6 +276,29 @@ const GameState = {
         return reward;
     },
 
+    quickClearStage(stageId) {
+        const stage = LEVELS.find(s => s.id === stageId);
+        if (!stage) return null;
+
+        const isCleared = !!this.state.stageProgress.cleared[stageId];
+        if (!isCleared) return { success: false, message: '该关卡尚未通关，无法快速通关' };
+
+        const reward = {
+            gold: stage.baseReward,
+            isFirstClear: false,
+            firstClearGold: 0
+        };
+
+        this.addGold(reward.gold);
+
+        this.save();
+        return {
+            success: true,
+            reward: reward,
+            stage: stage
+        };
+    },
+
     isStageUnlocked(stageId) {
         const stageIndex = LEVELS.findIndex(s => s.id === stageId);
         if (stageIndex === -1) return false;
