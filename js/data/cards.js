@@ -60,7 +60,11 @@ const SKILL_CARDS = [
         rarity: 'COMMON',
         multiplier: 0.8,
         effect: '对所有敌人造成自身攻击力80%的伤害',
-        description: '平沙落雁，剑气横扫。一剑挥出，如大漠风沙席卷四方。'
+        description: '平沙落雁，剑气横扫。一剑挥出，如大漠风沙席卷四方。',
+        targeting: 'all_enemies',
+        effects: [
+            { trigger: 'onUse', type: 'damage', target: 'enemy', base: 'atk', multiplier: 0.8 }
+        ]
     },
     {
         id: 'skill_002',
@@ -69,7 +73,96 @@ const SKILL_CARDS = [
         rarity: 'COMMON',
         multiplier: 0,
         effect: '速度+10，每回合回复50点生命',
-        description: '调息吐纳，以意领气。修习后身轻体健，伤势自愈。'
+        description: '调息吐纳，以意领气。修习后身轻体健，伤势自愈。',
+        targeting: 'self',
+        effects: [
+            { trigger: 'onBattleStart', type: 'stat_buff', target: 'self', stat: 'spd', value: 10 },
+            { trigger: 'onTurnEnd', type: 'heal', target: 'self', value: 50 }
+        ]
+    },
+    {
+        id: 'skill_003',
+        name: '灵盾',
+        type: 'passive_buff',
+        rarity: 'FINE',
+        multiplier: 0,
+        effect: '战斗开始时获得最大生命值20%的护盾',
+        description: '灵气护体，形成一道无形的屏障，抵御伤害。',
+        targeting: 'self',
+        effects: [
+            { trigger: 'onBattleStart', type: 'shield', target: 'self', base: 'maxHp', multiplier: 0.2 }
+        ]
+    },
+    {
+        id: 'skill_004',
+        name: '铁壁',
+        type: 'passive_buff',
+        rarity: 'FINE',
+        multiplier: 0,
+        effect: '生命值低于30%时，受到伤害减少50%',
+        description: '坚如铁壁，绝境之中爆发更强的防御力。',
+        targeting: 'self',
+        effects: [
+            { 
+                trigger: 'onDamageReceived', 
+                type: 'damage_reduction', 
+                target: 'self', 
+                condition: { type: 'hpBelow', value: 0.3 },
+                multiplier: 0.5 
+            }
+        ]
+    },
+    {
+        id: 'skill_005',
+        name: '嗜血',
+        type: 'passive_buff',
+        rarity: 'RARE',
+        multiplier: 0,
+        effect: '造成伤害时回复伤害值的20%生命',
+        description: '嗜血如命，以敌之血补己之身。',
+        targeting: 'self',
+        effects: [
+            { trigger: 'onDamageDealt', type: 'lifesteal', target: 'self', multiplier: 0.2 }
+        ]
+    },
+    {
+        id: 'skill_006',
+        name: '回春术',
+        type: 'heal',
+        rarity: 'FINE',
+        multiplier: 0.5,
+        effect: '为生命值最低的友方回复自身攻击力50%的生命',
+        description: '以气运功，为伤者疗伤续命。',
+        targeting: 'lowest_hp_ally',
+        effects: [
+            { trigger: 'onUse', type: 'heal', target: 'ally', base: 'atk', multiplier: 0.5 }
+        ]
+    },
+    {
+        id: 'skill_007',
+        name: '定身咒',
+        type: 'control',
+        rarity: 'RARE',
+        multiplier: 0,
+        effect: '使一名敌人下回合无法行动',
+        description: '封穴定身，令敌人动弹不得。',
+        targeting: 'random_enemy',
+        effects: [
+            { trigger: 'onUse', type: 'control', target: 'enemy', duration: 1 }
+        ]
+    },
+    {
+        id: 'skill_008',
+        name: '烈焰斩',
+        type: 'active_attack',
+        rarity: 'RARE',
+        multiplier: 1.5,
+        effect: '对单体敌人造成自身攻击力150%的伤害',
+        description: '烈焰附剑，一斩之下，势不可挡。',
+        targeting: 'single_enemy',
+        effects: [
+            { trigger: 'onUse', type: 'damage', target: 'enemy', base: 'atk', multiplier: 1.5 }
+        ]
     }
 ];
 

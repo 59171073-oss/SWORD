@@ -1,3 +1,70 @@
+var SkillEffectProcessor = {
+    getEffectsByTrigger: function(skill, trigger) {
+        if (!skill.effects) return [];
+        return skill.effects.filter(function(e) { return e.trigger === trigger; });
+    },
+
+    checkCondition: function(unit, condition) {
+        if (!condition) return true;
+        if (condition.type === 'hpBelow') {
+            return unit.currentHp > 0 && unit.currentHp / unit.maxHp < condition.value;
+        }
+        if (condition.type === 'hpAbove') {
+            return unit.currentHp / unit.maxHp > condition.value;
+        }
+        return true;
+    },
+
+    calculateValue: function(unit, effect) {
+        if (effect.value !== undefined) {
+            return effect.value;
+        }
+        if (effect.base && effect.multiplier !== undefined) {
+            var baseValue = unit[effect.base] || 0;
+            return Math.floor(baseValue * effect.multiplier);
+        }
+        return 0;
+    },
+
+    applyStatBuff: function(unit, effect) {
+        if (effect.stat && effect.value) {
+            unit[effect.stat] = (unit[effect.stat] || 0) + effect.value;
+        }
+    },
+
+    applyShield: function(unit, effect) {
+        var shieldAmount = this.calculateValue(unit, effect);
+        unit.shield = (unit.shield || 0) + shieldAmount;
+        return shieldAmount;
+    },
+
+    applyHeal: function(unit, effect) {
+        var healAmount = this.calculateValue(unit, effect);
+        var actualHeal = Math.min(healAmount, unit.maxHp - unit.currentHp);
+        unit.currentHp += actualHeal;
+        return actualHeal;
+    },
+
+    getDamageReduction: function(unit, effect, rawDamage) {
+        if (!this.checkCondition(unit, effect.condition)) return 0;
+        if (effect.multiplier) {
+            return rawDamage * effect.multiplier;
+        }
+        return 0;
+    },
+
+    applyLifesteal: function(unit, damageDealt, effect) {
+        if (!unit.alive) return 0;
+        var healAmount = Math.floor(damageDealt * (effect.multiplier || 0));
+        if (healAmount > 0) {
+            var actualHeal = Math.min(healAmount, unit.maxHp - unit.currentHp);
+            unit.currentHp += actualHeal;
+            return actualHeal;
+        }
+        return 0;
+    }
+};
+
 var BattleEngine = {
     _state: null,
     _onAction: null,
@@ -69,7 +136,7 @@ var BattleEngine = {
                     }
                 }
 
-                self._applyPassiveStatBonuses(unit);
+                self._applyBattleStartEffects(unit);
                 self._state.units.push(unit);
             });
         }
@@ -110,7 +177,7 @@ var BattleEngine = {
                 }
             }
 
-            self._applyPassiveStatBonuses(protUnit);
+            self._applyBattleStartEffects(protUnit);
             self._state.units.push(protUnit);
         }
 
@@ -146,14 +213,17 @@ var BattleEngine = {
         });
     },
 
-    _applyPassiveStatBonuses: function(unit) {
+    _applyBattleStartEffects: function(unit) {
+        var self = this;
         unit.skills.forEach(function(skill) {
-            if (skill.name === '吐纳心法') {
-                unit.spd += 10;
-            }
-            if (skill.name === '灵盾') {
-                unit.shield = Math.floor(unit.maxHp * 0.2);
-            }
+            var effects = SkillEffectProcessor.getEffectsByTrigger(skill, 'onBattleStart');
+            effects.forEach(function(effect) {
+                if (effect.type === 'stat_buff' && effect.target === 'self') {
+                    SkillEffectProcessor.applyStatBuff(unit, effect);
+                } else if (effect.type === 'shield' && effect.target === 'self') {
+                    SkillEffectProcessor.applyShield(unit, effect);
+                }
+            });
         });
     },
 
@@ -204,7 +274,7 @@ var BattleEngine = {
                 this._onAction(actionInfo);
             }
 
-            this._applyPerTurnPassives(unit);
+            this._applyTurnEndEffects(unit);
 
             var result = this._checkBattleEnd();
             if (result) {
@@ -240,17 +310,16 @@ var BattleEngine = {
         }
     },
 
-    _applyPerTurnPassives: function(unit) {
+    _applyTurnEndEffects: function(unit) {
         if (!unit.alive) return;
         var self = this;
         unit.skills.forEach(function(skill) {
-            if (skill.name === '吐纳心法') {
-                var healAmount = 50;
-                var actualHeal = Math.min(healAmount, unit.maxHp - unit.currentHp);
-                if (actualHeal > 0) {
-                    unit.currentHp += actualHeal;
+            var effects = SkillEffectProcessor.getEffectsByTrigger(skill, 'onTurnEnd');
+            effects.forEach(function(effect) {
+                if (effect.type === 'heal' && effect.target === 'self') {
+                    SkillEffectProcessor.applyHeal(unit, effect);
                 }
-            }
+            });
         });
     },
 
@@ -270,104 +339,72 @@ var BattleEngine = {
         var self = this;
         var totalDamageDealt = 0;
 
-        var activeSkill = null;
-        for (var i = 0; i < unit.skills.length; i++) {
-            var s = unit.skills[i];
-            if (s.type === 'active_attack' || s.type === 'heal' || s.type === 'control') {
-                activeSkill = s;
-                break;
-            }
-        }
+        var activeSkill = this._selectActiveSkill(unit);
 
         if (activeSkill) {
             var skill = activeSkill;
-            var finalMultiplier = skill.multiplier;
-            var isAoe = skill.effect && skill.effect.indexOf('所有') !== -1;
+            var finalMultiplier = skill.multiplier || 1.0;
+            var targeting = skill.targeting || 'single_enemy';
 
             actionInfo.type = 'skill';
             actionInfo.skill = { id: skill.id, name: skill.name, type: skill.type };
 
             if (skill.type === 'active_attack') {
-                if (isAoe) {
-                    var enemies = this._state.units.filter(function(u) {
-                        return u.side !== unit.side && u.alive;
+                var targets = this._getTargets(unit, targeting, false);
+                targets.forEach(function(target) {
+                    var dmgResult = self._calculateDamage(unit, target, finalMultiplier);
+                    self._applyDamageToUnit(target, dmgResult.damage);
+                    totalDamageDealt += dmgResult.damage;
+                    actionInfo.damage += dmgResult.damage;
+                    actionInfo.results.push({
+                        target: { id: target.id, name: target.name, side: target.side },
+                        damage: dmgResult.damage,
+                        elementModifier: dmgResult.elementModifier,
+                        isCrit: dmgResult.isCrit
                     });
-                    enemies.forEach(function(enemy) {
-                        var dmgResult = self._calculateDamage(unit, enemy, finalMultiplier);
-                        self._applyDamageToUnit(enemy, dmgResult.damage);
-                        totalDamageDealt += dmgResult.damage;
-                        actionInfo.damage += dmgResult.damage;
-                        actionInfo.results.push({
-                            target: { id: enemy.id, name: enemy.name, side: enemy.side },
-                            damage: dmgResult.damage,
-                            elementModifier: dmgResult.elementModifier,
-                            isCrit: dmgResult.isCrit
-                        });
-                    });
-                } else {
-                    var target = this._selectTarget(unit, false);
-                    if (target) {
-                        var dmgResult = this._calculateDamage(unit, target, finalMultiplier);
-                        this._applyDamageToUnit(target, dmgResult.damage);
-                        totalDamageDealt = dmgResult.damage;
-                        actionInfo.target = { id: target.id, name: target.name, side: target.side };
-                        actionInfo.damage = dmgResult.damage;
-                        actionInfo.elementModifier = dmgResult.elementModifier;
-                        actionInfo.isCrit = dmgResult.isCrit;
-                        actionInfo.results.push({
-                            target: actionInfo.target,
-                            damage: dmgResult.damage,
-                            elementModifier: dmgResult.elementModifier,
-                            isCrit: dmgResult.isCrit
-                        });
-                    }
+                });
+
+                if (targets.length > 0) {
+                    actionInfo.target = { id: targets[0].id, name: targets[0].name, side: targets[0].side };
                 }
 
                 if (totalDamageDealt > 0) {
-                    this._triggerPassiveOnAttack(unit, totalDamageDealt);
+                    this._applyOnDamageDealtEffects(unit, totalDamageDealt);
                 }
 
             } else if (skill.type === 'heal') {
-                if (isAoe) {
-                    var allies = this._state.units.filter(function(u) {
-                        return u.side === unit.side && u.alive;
+                var targets = this._getTargets(unit, targeting, true);
+                targets.forEach(function(target) {
+                    var healAmount = Math.floor(unit.atk * finalMultiplier);
+                    var actualHeal = Math.min(healAmount, target.maxHp - target.currentHp);
+                    target.currentHp += actualHeal;
+                    actionInfo.heal += actualHeal;
+                    actionInfo.results.push({
+                        target: { id: target.id, name: target.name, side: target.side },
+                        heal: actualHeal
                     });
-                    allies.forEach(function(ally) {
-                        var healAmount = Math.floor(unit.atk * finalMultiplier);
-                        var actualHeal = Math.min(healAmount, ally.maxHp - ally.currentHp);
-                        ally.currentHp += actualHeal;
-                        actionInfo.heal += actualHeal;
-                        actionInfo.results.push({
-                            target: { id: ally.id, name: ally.name, side: ally.side },
-                            heal: actualHeal
-                        });
-                    });
-                } else {
-                    var target = this._selectTarget(unit, true);
-                    if (target) {
-                        var healAmount = Math.floor(unit.atk * finalMultiplier);
-                        var actualHeal = Math.min(healAmount, target.maxHp - target.currentHp);
-                        target.currentHp += actualHeal;
-                        actionInfo.target = { id: target.id, name: target.name, side: target.side };
-                        actionInfo.heal = actualHeal;
-                        actionInfo.results.push({
-                            target: actionInfo.target,
-                            heal: actualHeal
-                        });
-                    }
+                });
+
+                if (targets.length > 0) {
+                    actionInfo.target = { id: targets[0].id, name: targets[0].name, side: targets[0].side };
                 }
 
             } else if (skill.type === 'control') {
-                var enemies = this._state.units.filter(function(u) {
-                    return u.side !== unit.side && u.alive && u.controlled === 0;
-                });
-                if (enemies.length > 0) {
-                    var target = enemies[Math.floor(Math.random() * enemies.length)];
-                    target.controlled = 1;
+                var targets = this._getTargets(unit, targeting, false);
+                targets = targets.filter(function(t) { return t.controlled === 0; });
+                if (targets.length > 0) {
+                    var target = targets[0];
+                    var duration = 1;
+                    skill.effects.forEach(function(effect) {
+                        if (effect.type === 'control' && effect.duration) {
+                            duration = effect.duration;
+                        }
+                    });
+                    target.controlled = duration;
                     actionInfo.target = { id: target.id, name: target.name, side: target.side };
                     actionInfo.results.push({
                         target: actionInfo.target,
-                        controlled: 1
+                        controlled: duration
                     });
                 }
             }
@@ -389,11 +426,70 @@ var BattleEngine = {
                     isCrit: dmgResult.isCrit
                 });
 
-                this._triggerPassiveOnAttack(unit, totalDamageDealt);
+                this._applyOnDamageDealtEffects(unit, totalDamageDealt);
             }
         }
 
         return actionInfo;
+    },
+
+    _selectActiveSkill: function(unit) {
+        for (var i = 0; i < unit.skills.length; i++) {
+            var s = unit.skills[i];
+            if (s.type === 'active_attack' || s.type === 'heal' || s.type === 'control') {
+                return s;
+            }
+        }
+        return null;
+    },
+
+    _getTargets: function(actor, targeting, isHeal) {
+        var self = this;
+        
+        if (targeting === 'all_enemies') {
+            return this._state.units.filter(function(u) {
+                return u.side !== actor.side && u.alive;
+            });
+        }
+        
+        if (targeting === 'all_allies') {
+            return this._state.units.filter(function(u) {
+                return u.side === actor.side && u.alive;
+            });
+        }
+        
+        if (targeting === 'single_enemy') {
+            var target = this._selectTarget(actor, false);
+            return target ? [target] : [];
+        }
+        
+        if (targeting === 'lowest_hp_ally') {
+            var allies = this._state.units.filter(function(u) {
+                return u.side === actor.side && u.alive;
+            });
+            if (allies.length === 0) return [];
+            var minHp = allies[0].currentHp;
+            allies.forEach(function(a) {
+                if (a.currentHp < minHp) minHp = a.currentHp;
+            });
+            var lowest = allies.filter(function(a) { return a.currentHp === minHp; });
+            return [lowest[Math.floor(Math.random() * lowest.length)]];
+        }
+        
+        if (targeting === 'random_enemy') {
+            var enemies = this._state.units.filter(function(u) {
+                return u.side !== actor.side && u.alive;
+            });
+            if (enemies.length === 0) return [];
+            return [enemies[Math.floor(Math.random() * enemies.length)]];
+        }
+        
+        if (targeting === 'self') {
+            return [actor];
+        }
+
+        var target = this._selectTarget(actor, isHeal);
+        return target ? [target] : [];
     },
 
     _calculateDamage: function(attacker, defender, skillMultiplier) {
@@ -402,13 +498,18 @@ var BattleEngine = {
 
         var rawDamage = attacker.atk * (1 - defender.def / (defender.def + 100)) * elementModifier * multiplier;
 
-        var hasIronWall = false;
+        var totalReduction = 0;
+        var self = this;
         defender.skills.forEach(function(skill) {
-            if (skill.name === '铁壁') hasIronWall = true;
+            var effects = SkillEffectProcessor.getEffectsByTrigger(skill, 'onDamageReceived');
+            effects.forEach(function(effect) {
+                if (effect.type === 'damage_reduction') {
+                    var reduction = SkillEffectProcessor.getDamageReduction(defender, effect, rawDamage);
+                    totalReduction += reduction;
+                }
+            });
         });
-        if (hasIronWall && defender.currentHp > 0 && defender.currentHp / defender.maxHp < 0.3) {
-            rawDamage = rawDamage * 0.5;
-        }
+        rawDamage = rawDamage - totalReduction;
 
         var isCrit = false;
         if (attacker.spd > 120) {
@@ -445,6 +546,18 @@ var BattleEngine = {
             defender.currentHp = 0;
             defender.alive = false;
         }
+    },
+
+    _applyOnDamageDealtEffects: function(unit, damageDealt) {
+        var self = this;
+        unit.skills.forEach(function(skill) {
+            var effects = SkillEffectProcessor.getEffectsByTrigger(skill, 'onDamageDealt');
+            effects.forEach(function(effect) {
+                if (effect.type === 'lifesteal') {
+                    SkillEffectProcessor.applyLifesteal(unit, damageDealt, effect);
+                }
+            });
+        });
     },
 
     _selectTarget: function(actor, isHeal) {
@@ -490,19 +603,6 @@ var BattleEngine = {
 
         if (this._onEnd) {
             this._onEnd(this.getResult());
-        }
-    },
-
-    _triggerPassiveOnAttack: function(unit, damageDealt) {
-        var hasBloodthirst = false;
-        unit.skills.forEach(function(skill) {
-            if (skill.name === '嗜血') hasBloodthirst = true;
-        });
-        if (hasBloodthirst && unit.alive) {
-            var healAmount = Math.floor(damageDealt * 0.2);
-            if (healAmount > 0) {
-                unit.currentHp = Math.min(unit.maxHp, unit.currentHp + healAmount);
-            }
         }
     },
 
@@ -590,3 +690,4 @@ var BattleEngine = {
 };
 
 window.BattleEngine = BattleEngine;
+window.SkillEffectProcessor = SkillEffectProcessor;

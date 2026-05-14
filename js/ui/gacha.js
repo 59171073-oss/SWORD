@@ -103,7 +103,17 @@
         }
         updateGoldDisplay();
 
-        var results = gachaRoll(count);
+        var results;
+        if (isFirstFree && count === 1) {
+            var jiading = CHARACTER_CARDS.find(function(c) { return c.id === 'char_001'; });
+            if (jiading) {
+                results = [{ cardId: jiading.id, type: 'hero', originalType: 'hero', rarity: jiading.rarity }];
+            } else {
+                results = gachaRoll(count);
+            }
+        } else {
+            results = gachaRoll(count);
+        }
 
         if (count === 10) {
             var allCommon = results.every(function (r) { return r.rarity === 'COMMON'; });
