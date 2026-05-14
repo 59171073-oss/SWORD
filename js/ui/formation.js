@@ -9,8 +9,8 @@
     var EQUIP_SLOT_CONFIG = [
         { key: 'weapon', label: '武器', icon: '⚔️' },
         { key: 'armor', label: '护甲', icon: '🛡️' },
-        { key: 'accessory', label: '饰品', icon: '💍' },
-        { key: 'secret', label: '秘籍', icon: '📖' }
+        { key: 'accessory1', label: '饰品一', icon: '💍' },
+        { key: 'accessory2', label: '饰品二', icon: '💍' }
     ];
 
     var SKILL_SLOT_CONFIG = [

@@ -302,9 +302,37 @@
             html += '<div>战斗回合：' + result.rounds + '</div>';
             html += '<div>存活角色：' + (result.playerSurvivors || 0) + '</div>';
 
+            html += '<div class="player-stats-section" style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(212,160,23,0.2);">';
+            html += '<div style="font-size:13px;color:var(--gold);margin-bottom:8px;text-align:center;">📊 我方战斗数据</div>';
+            html += '<div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding-right:4px;">';
+
+            var playerUnits = result.playerUnits || [];
+            playerUnits.forEach(function(unit) {
+                var hpPct = unit.maxHp > 0 ? Math.round((unit.currentHp / unit.maxHp) * 100) : 0;
+                var hpColor = hpPct > 60 ? 'var(--jade)' : (hpPct > 30 ? 'var(--gold)' : 'var(--vermilion)');
+                var statusIcon = unit.alive ? '✅' : '❌';
+                var classData = CLASSES[unit.classId];
+
+                html += '<div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:4px;font-size:11px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+                html += '<span style="font-size:12px;">' + (classData ? classData.icon : '?') + ' ' + unit.name + '</span>';
+                html += '<span style="color:' + hpColor + ';">' + statusIcon + ' ' + hpPct + '%</span>';
+                html += '</div>';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                html += '<div style="display:flex;gap:6px;">';
+                html += '<span style="color:var(--vermilion);">❤️ ' + Math.max(0, Math.floor(unit.currentHp)) + '/' + unit.maxHp + '</span>';
+                html += '</div>';
+                html += '<div style="font-size:10px;color:var(--cyan-gray);">Lv.' + (unit.level || 1) + '</div>';
+                html += '</div>';
+                html += '</div>';
+            });
+
+            html += '</div>';
+            html += '</div>';
+
             var reward = GameState.clearStage(stageId);
             if (reward) {
-                html += '<div class="reward-gold" style="margin-top:8px;">💰 ' + reward.gold + '</div>';
+                html += '<div class="reward-gold" style="margin-top:12px;">💰 ' + reward.gold + '</div>';
                 if (reward.isFirstClear) {
                     html += '<span class="reward-first">🎉 首次通关额外奖励：💰 ' + reward.firstClearGold + '</span>';
                 }
@@ -334,6 +362,37 @@
         } else {
             html += '<div class="result-title defeat" style="animation:defeatShake 0.5s ease;">战败...</div>';
             html += '<div class="result-rewards">';
+
+            html += '<div style="margin-bottom:12px;">战斗回合：' + result.rounds + '</div>';
+
+            html += '<div class="player-stats-section" style="margin-bottom:12px;">';
+            html += '<div style="font-size:13px;color:var(--gold);margin-bottom:8px;text-align:center;">📊 我方战斗数据</div>';
+            html += '<div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding-right:4px;">';
+
+            var playerUnitsLoss = result.playerUnits || [];
+            playerUnitsLoss.forEach(function(unit) {
+                var hpPct = unit.maxHp > 0 ? Math.round((unit.currentHp / unit.maxHp) * 100) : 0;
+                var hpColor = hpPct > 60 ? 'var(--jade)' : (hpPct > 30 ? 'var(--gold)' : 'var(--vermilion)');
+                var statusIcon = unit.alive ? '✅' : '❌';
+                var classData = CLASSES[unit.classId];
+
+                html += '<div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:4px;font-size:11px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+                html += '<span style="font-size:12px;">' + (classData ? classData.icon : '?') + ' ' + unit.name + '</span>';
+                html += '<span style="color:' + hpColor + ';">' + statusIcon + ' ' + hpPct + '%</span>';
+                html += '</div>';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                html += '<div style="display:flex;gap:6px;">';
+                html += '<span style="color:var(--vermilion);">❤️ ' + Math.max(0, Math.floor(unit.currentHp)) + '/' + unit.maxHp + '</span>';
+                html += '</div>';
+                html += '<div style="font-size:10px;color:var(--cyan-gray);">Lv.' + (unit.level || 1) + '</div>';
+                html += '</div>';
+                html += '</div>';
+            });
+
+            html += '</div>';
+            html += '</div>';
+
             html += '<div style="color:var(--cyan-gray);line-height:1.8;">胜败乃兵家常事<br>调整编队再战</div>';
             html += '</div>';
             html += '<div class="result-actions">';

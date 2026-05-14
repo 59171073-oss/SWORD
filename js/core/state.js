@@ -204,9 +204,27 @@ const GameState = {
             }
         }
 
+        const skillBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
+        if (formation.skills && formation.skills[heroInstanceId]) {
+            const heroSkills = formation.skills[heroInstanceId];
+            for (const slot in heroSkills) {
+                const skillId = heroSkills[slot];
+                if (skillId) {
+                    const skillData = SKILL_CARDS.find(s => s.id === skillId);
+                    if (skillData && skillData.effects) {
+                        skillData.effects.forEach(function(effect) {
+                            if (effect.type === 'stat_buff' && effect.stat && effect.target === 'self') {
+                                skillBonus[effect.stat] += effect.value;
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
         const finalStats = {};
         for (const stat in statsWithLevel) {
-            finalStats[stat] = statsWithLevel[stat] + equipBonus[stat] + synergyBonus[stat];
+            finalStats[stat] = statsWithLevel[stat] + equipBonus[stat] + synergyBonus[stat] + skillBonus[stat];
         }
 
         return {
