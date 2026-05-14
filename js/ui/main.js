@@ -4,6 +4,7 @@
     var PAGE_MAP = {
         city: 'page-city',
         protagonist: 'page-protagonist',
+        heroes: 'page-heroes',
         formation: 'page-formation',
         stages: 'page-stages',
         gacha: 'page-gacha',
@@ -71,6 +72,9 @@
         }
         if (pageId === 'protagonist' && typeof window.renderProtagonistPage === 'function') {
             window.renderProtagonistPage();
+        }
+        if (pageId === 'heroes' && typeof window.renderHeroes === 'function') {
+            window.renderHeroes();
         }
     };
 
