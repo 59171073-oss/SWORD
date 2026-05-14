@@ -63,12 +63,15 @@ const GachaUI = {
     },
 
     doFreeGacha() {
-        const card = this.drawCard('hero');
-        GameState.state.firstGachaUsed = true;
-        GameState.save();
-        this.showGachaResult([card]);
-        this.updateGoldDisplay();
-        this.render();
+        const qinZiwei = CHARACTER_CARDS.find(c => c.id === 'char_002');
+        if (qinZiwei) {
+            GameState.addCard('char_002', 'hero', 'FINE');
+            GameState.state.firstGachaUsed = true;
+            GameState.save();
+            this.showGachaResult([{ ...qinZiwei, rarity: 'FINE' }]);
+            this.updateGoldDisplay();
+            this.render();
+        }
     },
 
     doGacha(count) {
