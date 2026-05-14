@@ -1,13 +1,99 @@
-(function () {
+const GachaUI = {
+    container: null,
 
-    function updateGachaGold() {
-        var goldEl = document.getElementById('gacha-gold');
-        if (goldEl) goldEl.textContent = GameState.state.gold;
-    }
+    init(containerId) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
+        this.render();
+    },
 
-    function drawCard(type) {
-        var rarityRoll = Math.random();
-        var rarity;
+    render() {
+        if (!this.container) return;
+
+        const gold = GameState.state.gold;
+        const canFreeGacha = !GameState.state.firstGachaUsed;
+
+        this.container.innerHTML = `
+            <div class="gacha-container">
+                <div class="gacha-header">
+                    <h2>抽卡</h2>
+                    <div class="gold-display">金币: ${gold}</div>
+                </div>
+                <div class="gacha-pools">
+                    <div class="pool-section">
+                        <h3>角色池</h3>
+                        <div class="pool-rates">
+                            <div class="rate-item"><span class="rate-label">普通:</span> 60%</div>
+                            <div class="rate-item"><span class="rate-label">精良:</span> 25%</div>
+                            <div class="rate-item"><span class="rate-label">稀有:</span> 12%</div>
+                            <div class="rate-item"><span class="rate-label">传说:</span> 3%</div>
+                        </div>
+                        <div class="gacha-buttons">
+                            ${canFreeGacha ? '<button class="gacha-btn free-btn" id="free-gacha-btn">免费抽取</button>' : ''}
+                            <button class="gacha-btn" id="gacha-10-btn">十连抽 (1000金币)</button>
+                            <button class="gacha-btn" id="gacha-1-btn">单抽 (100金币)</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="gacha-history" id="gacha-history">
+                    <h3>最近抽取</h3>
+                    <div class="history-list" id="history-list"></div>
+                </div>
+            </div>
+        `;
+
+        this.bindEvents();
+    },
+
+    bindEvents() {
+        const freeBtn = document.getElementById('free-gacha-btn');
+        if (freeBtn) {
+            freeBtn.addEventListener('click', () => this.doFreeGacha());
+        }
+
+        const gacha10Btn = document.getElementById('gacha-10-btn');
+        if (gacha10Btn) {
+            gacha10Btn.addEventListener('click', () => this.doGacha(10));
+        }
+
+        const gacha1Btn = document.getElementById('gacha-1-btn');
+        if (gacha1Btn) {
+            gacha1Btn.addEventListener('click', () => this.doGacha(1));
+        }
+    },
+
+    doFreeGacha() {
+        const qinZiwei = CHARACTER_CARDS.find(c => c.id === 'char_002');
+        if (qinZiwei) {
+            GameState.addCard('char_002', 'hero', 'FINE');
+            GameState.state.firstGachaUsed = true;
+            GameState.save();
+            this.showGachaResult([{ ...qinZiwei, rarity: 'FINE' }]);
+            this.updateGoldDisplay();
+            this.render();
+        }
+    },
+
+    doGacha(count) {
+        const cost = count === 10 ? 1000 : 100;
+        if (!GameState.spendGold(cost)) {
+            alert('金币不足！');
+            return;
+        }
+
+        const cards = [];
+        for (let i = 0; i < count; i++) {
+            cards.push(this.drawCard('random'));
+        }
+
+        this.showGachaResult(cards);
+        this.updateGoldDisplay();
+        this.render();
+    },
+
+    drawCard(type) {
+        const rarityRoll = Math.random();
+        let rarity;
         if (rarityRoll < 0.03) {
             rarity = 'LEGEND';
         } else if (rarityRoll < 0.15) {
@@ -19,16 +105,16 @@
         }
 
         if (type === 'hero') {
-            var heroCards = CHARACTER_CARDS.filter(function (c) { return c.rarity === rarity; });
+            const heroCards = CHARACTER_CARDS.filter(c => c.rarity === rarity);
             if (heroCards.length > 0) {
-                var selected = heroCards[Math.floor(Math.random() * heroCards.length)];
+                const selected = heroCards[Math.floor(Math.random() * heroCards.length)];
                 GameState.addCard(selected.id, 'hero', rarity);
-                return Object.assign({}, selected, { rarity: rarity });
+                return { ...selected, rarity };
             }
         }
 
-        var typeRoll = Math.random();
-        var cardType;
+        const typeRoll = Math.random();
+        let cardType;
         if (typeRoll < 0.30) {
             cardType = 'weapon';
         } else if (typeRoll < 0.60) {
@@ -41,138 +127,102 @@
             cardType = 'hero';
         }
 
-        var cardPool;
+        let cardPool;
         switch (cardType) {
-            case 'weapon': cardPool = EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity; }); break;
-            case 'armor': cardPool = EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity; }); break;
-            case 'accessory': cardPool = EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity; }); break;
-            case 'skill': cardPool = SKILL_CARDS.filter(function (c) { return c.rarity === rarity; }); break;
-            case 'hero': cardPool = CHARACTER_CARDS.filter(function (c) { return c.rarity === rarity; }); break;
+            case 'weapon': cardPool = EQUIPMENT_CARDS.filter(c => c.rarity === rarity); break;
+            case 'armor': cardPool = EQUIPMENT_CARDS.filter(c => c.rarity === rarity); break;
+            case 'accessory': cardPool = EQUIPMENT_CARDS.filter(c => c.rarity === rarity); break;
+            case 'skill': cardPool = SKILL_CARDS.filter(c => c.rarity === rarity); break;
+            case 'hero': cardPool = CHARACTER_CARDS.filter(c => c.rarity === rarity); break;
             default: cardPool = [];
         }
 
         if (cardPool.length > 0) {
-            var selected = cardPool[Math.floor(Math.random() * cardPool.length)];
-            GameState.addCard(selected.id, cardType === 'weapon' || cardType === 'armor' || cardType === 'accessory' ? 'equip' : cardType, rarity);
-            return Object.assign({}, selected, { rarity: rarity });
+            const selected = cardPool[Math.floor(Math.random() * cardPool.length)];
+            GameState.addCard(selected.id, cardType, rarity);
+            return { ...selected, rarity };
         }
 
-        var fallbackCards = EQUIPMENT_CARDS.filter(function (c) { return c.rarity === 'COMMON'; });
+        const fallbackCards = EQUIPMENT_CARDS.filter(c => c.rarity === 'COMMON');
         if (fallbackCards.length > 0) {
-            var selected = fallbackCards[Math.floor(Math.random() * fallbackCards.length)];
-            GameState.addCard(selected.id, 'equip', 'COMMON');
-            return Object.assign({}, selected, { rarity: 'COMMON' });
+            const selected = fallbackCards[Math.floor(Math.random() * fallbackCards.length)];
+            GameState.addCard(selected.id, 'weapon', 'COMMON');
+            return { ...selected, rarity: 'COMMON' };
         }
 
         return null;
-    }
+    },
 
-    function showGachaResult(cards) {
-        var resultsEl = document.getElementById('gacha-results');
-        if (!resultsEl) return;
+    showGachaResult(cards) {
+        const overlay = document.createElement('div');
+        overlay.className = 'gacha-overlay';
 
-        var html = '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:12px 0;">';
-
-        for (var i = 0; i < cards.length; i++) {
-            var card = cards[i];
-            if (!card) continue;
-            var rarityData = RARITY[card.rarity];
-            var typeLabel = '';
-            var typeIcon = '';
-            switch (card.type) {
-                case 'weapon': typeLabel = '武器'; typeIcon = '⚔️'; break;
-                case 'armor': typeLabel = '护甲'; typeIcon = '🛡️'; break;
-                case 'accessory': typeLabel = '饰品'; typeIcon = '💍'; break;
-                case 'skill': typeLabel = '武学'; typeIcon = '📖'; break;
-                default: typeLabel = '侠客'; typeIcon = '👤';
+        const cardsHtml = cards.map(card => {
+            if (!card) return '';
+            const rarityData = RARITY[card.rarity];
+            let typeLabel = '';
+            switch (card.type || card.classId) {
+                case 'weapon': typeLabel = '武器'; break;
+                case 'armor': typeLabel = '防具'; break;
+                case 'accessory': typeLabel = '饰品'; break;
+                case 'skill': typeLabel = '武学'; break;
+                default: typeLabel = '英雄';
             }
 
-            var rarityCls = 'rarity-' + card.rarity.toLowerCase();
-            html += '<div class="card ' + rarityCls + '" style="width:80px;text-align:center;padding:8px;border-radius:6px;">';
-            html += '<div style="font-size:24px;margin-bottom:4px;">' + typeIcon + '</div>';
-            html += '<div style="font-size:11px;color:var(--parchment);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + card.name + '</div>';
-            html += '<div style="font-size:9px;color:' + (rarityData ? rarityData.color : '#ccc') + ';">' + (rarityData ? rarityData.name : '') + '</div>';
-            html += '<div style="font-size:9px;color:var(--cyan-gray);">' + typeLabel + '</div>';
-            html += '</div>';
-        }
+            return `
+                <div class="gacha-card rarity-${card.rarity.toLowerCase()}">
+                    <div class="card-rarity" style="color: ${rarityData.color}">${rarityData.name}</div>
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-type">${typeLabel}</div>
+                    <div class="card-effect">${card.effect || card.description || ''}</div>
+                </div>
+            `;
+        }).join('');
 
-        html += '</div>';
-        resultsEl.innerHTML = html;
+        overlay.innerHTML = `
+            <div class="gacha-result-modal">
+                <h2>恭喜获得</h2>
+                <div class="gacha-cards">${cardsHtml}</div>
+                <button class="gacha-close-btn" id="gacha-close-btn">确定</button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        document.getElementById('gacha-close-btn').addEventListener('click', () => {
+            overlay.remove();
+        });
+
+        this.addToHistory(cards);
+    },
+
+    addToHistory(cards) {
+        const historyList = document.getElementById('history-list');
+        if (!historyList) return;
+
+        cards.forEach(card => {
+            if (!card) return;
+            const rarityData = RARITY[card.rarity];
+            const entry = document.createElement('div');
+            entry.className = `history-item rarity-${card.rarity.toLowerCase()}`;
+            entry.innerHTML = `
+                <span class="history-rarity" style="color: ${rarityData.color}">${rarityData.name}</span>
+                <span class="history-name">${card.name}</span>
+            `;
+            historyList.insertBefore(entry, historyList.firstChild);
+        });
+
+        while (historyList.children.length > 10) {
+            historyList.removeChild(historyList.lastChild);
+        }
+    },
+
+    updateGoldDisplay() {
+        const goldDisplay = this.container.querySelector('.gold-display');
+        if (goldDisplay) {
+            goldDisplay.textContent = `金币: ${GameState.state.gold}`;
+        }
     }
+};
 
-    function doFreeGacha() {
-        var qinZiwei = CHARACTER_CARDS.find(function (c) { return c.id === 'char_002'; });
-        if (qinZiwei) {
-            GameState.addCard('char_002', 'hero', 'FINE');
-            GameState.state.firstGachaUsed = true;
-            GameState.save();
-            showGachaResult([Object.assign({}, qinZiwei, { rarity: 'FINE' })]);
-            updateGachaGold();
-            window.updateStatusBar();
-            window.showToast('获得侠客：秦紫薇！');
-            renderGachaPage();
-        }
-    }
-
-    function doGacha(count) {
-        var cost = count === 10 ? 900 : 100;
-        if (!GameState.spendGold(cost)) {
-            window.showToast('金币不足！', true);
-            return;
-        }
-
-        var cards = [];
-        for (var i = 0; i < count; i++) {
-            cards.push(drawCard('random'));
-        }
-
-        showGachaResult(cards);
-        updateGachaGold();
-        window.updateStatusBar();
-    }
-
-    window.renderGachaPage = function () {
-        updateGachaGold();
-
-        var freeBtn = document.getElementById('btn-gacha-free');
-        if (freeBtn) {
-            freeBtn.parentNode.removeChild(freeBtn);
-        }
-
-        var buttonsContainer = document.querySelector('.gacha-buttons');
-        if (!buttonsContainer) return;
-
-        if (!GameState.state.firstGachaUsed) {
-            var freeBtnEl = document.createElement('button');
-            freeBtnEl.className = 'btn-ancient btn-gacha-free';
-            freeBtnEl.id = 'btn-gacha-free';
-            freeBtnEl.textContent = '免费招募 (秦紫薇)';
-            freeBtnEl.style.background = 'linear-gradient(180deg,#1e8449,#145a32)';
-            freeBtnEl.style.borderColor = '#2ecc71';
-            freeBtnEl.style.marginBottom = '8px';
-            freeBtnEl.addEventListener('click', function () {
-                doFreeGacha();
-            });
-            buttonsContainer.insertBefore(freeBtnEl, buttonsContainer.firstChild);
-        }
-
-        var singleBtn = document.getElementById('btn-gacha-single');
-        if (singleBtn) {
-            var newSingle = singleBtn.cloneNode(true);
-            singleBtn.parentNode.replaceChild(newSingle, singleBtn);
-            newSingle.addEventListener('click', function () {
-                doGacha(1);
-            });
-        }
-
-        var tenBtn = document.getElementById('btn-gacha-ten');
-        if (tenBtn) {
-            var newTen = tenBtn.cloneNode(true);
-            tenBtn.parentNode.replaceChild(newTen, tenBtn);
-            newTen.addEventListener('click', function () {
-                doGacha(10);
-            });
-        }
-    };
-
-})();
+window.GachaUI = GachaUI;
