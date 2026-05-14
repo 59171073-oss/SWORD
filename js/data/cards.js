@@ -13,7 +13,8 @@ const CHARACTER_CARDS = [
         element: '土',
         rarity: 'COMMON',
         baseStats: { hp: 500, atk: 50, def: 40, spd: 60 },
-        description: '府中家丁，忠心耿耿，虽无绝世武功，却有一身蛮力。'
+        description: '府中家丁，忠心耿耿，虽无绝世武功，却有一身蛮力。',
+        imageUrl: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20ancient%20servant%20retainer%20in%20simple%20clothes%2C%20wuxia%20style%2C%20portrait%2C%20strong%20build%2C%20honest%20expression&image_size=square_hd'
     }
 ];
 
@@ -236,5 +237,6 @@ const PROTAGONIST = {
     gender: 'male',
     element: '金',
     baseStats: { hp: 1000, atk: 100, def: 80, spd: 90 },
-    description: '初入江湖的少年侠客，前途无量。'
+    description: '初入江湖的少年侠客，前途无量。',
+    imageUrl: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=young%20chinese%20wuxia%20hero%20knight%2C%20handsome%2C%20wearing%20traditional%20martial%20arts%20clothes%2C%20holding%20sword%2C%20confident%20expression%2C%20portrait&image_size=square_hd'
 };

@@ -116,7 +116,13 @@
         var name = cardDef ? cardDef.name : '未知';
         var html = '';
 
-        html += '<div class="card-portrait">' + portraitIcon + '</div>';
+        if (entry.type === 'hero' && cardDef && cardDef.imageUrl) {
+            html += '<div class="card-portrait" style="padding:0;overflow:hidden;">';
+            html += '<img src="' + cardDef.imageUrl + '" alt="' + name + '" style="width:100%;height:100%;object-fit:cover;">';
+            html += '</div>';
+        } else {
+            html += '<div class="card-portrait">' + portraitIcon + '</div>';
+        }
         html += '<div class="card-name">' + name + '</div>';
         html += '<div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:2px;">';
         html += '<span class="card-level">Lv.' + entry.level + '</span>';
@@ -193,7 +199,13 @@
         var html = '<div class="card-detail">';
 
         html += '<div class="detail-header">';
-        html += '<div class="detail-portrait" style="border-color:' + rarityColor + ';">' + typeIcon + '</div>';
+        if (entry.type === 'hero' && cardDef && cardDef.imageUrl) {
+            html += '<div class="detail-portrait" style="border-color:' + rarityColor + ';padding:0;overflow:hidden;">';
+            html += '<img src="' + cardDef.imageUrl + '" alt="' + cardDef.name + '" style="width:100%;height:100%;object-fit:cover;">';
+            html += '</div>';
+        } else {
+            html += '<div class="detail-portrait" style="border-color:' + rarityColor + ';">' + typeIcon + '</div>';
+        }
         html += '<div class="detail-name">' + cardDef.name + '</div>';
         html += '<div class="detail-tags">';
         html += '<span style="color:' + rarityColor + ';font-size:12px;letter-spacing:1px;">' + rarityName + '</span>';

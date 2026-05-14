@@ -84,6 +84,12 @@
         html += '<span class="hero-badge">⚔️ 少侠</span>';
         html += '<span class="hero-level">Lv.' + stats.level + '</span>';
         html += '</div>';
+        
+        if (PROTAGONIST.imageUrl) {
+            html += '<div class="hero-portrait-container" style="text-align:center;margin:8px 0;">';
+            html += '<img src="' + PROTAGONIST.imageUrl + '" alt="' + PROTAGONIST.name + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:2px solid var(--gold);">';
+            html += '</div>';
+        }
 
         html += '<div class="hero-stats">';
         for (var stat in STAT_LABELS) {
@@ -152,6 +158,12 @@
         }
         html += '<span class="hero-level">Lv.' + heroEntry.level + '</span>';
         html += '</div>';
+        
+        if (heroData.imageUrl) {
+            html += '<div class="hero-portrait-container" style="text-align:center;margin:8px 0;">';
+            html += '<img src="' + heroData.imageUrl + '" alt="' + heroData.name + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:2px solid var(--gold);">';
+            html += '</div>';
+        }
 
         html += '<div class="hero-info">';
         html += '<span class="card-element element-' + heroData.element + '">' + heroData.element + '</span>';
