@@ -287,8 +287,19 @@
         var stats = GameState.getProtagonistStats();
         var p = GameState.state.protagonist;
 
-        var html = '<div class="modal-title">⚔️ 少侠详情</div>';
+        var html = '<div class="hero-detail-header-bar">';
+        html += '<div class="modal-title">⚔️ 少侠详情</div>';
         html += '<button class="modal-close" onclick="window._hideHeroesModal()">✕</button>';
+        html += '</div>';
+
+        html += '<div class="hero-detail-layout">';
+        
+        if (PROTAGONIST.cgImage) {
+            html += '<div class="hero-cg-container">';
+            html += '<img src="' + PROTAGONIST.cgImage + '" alt="少侠" class="hero-cg-image" onerror="this.style.display=\'none\'">';
+            html += '<div class="hero-cg-name">少侠</div>';
+            html += '</div>';
+        }
 
         html += '<div class="hero-detail-content">';
 
@@ -358,6 +369,7 @@
         html += '</div>';
 
         html += '</div>';
+        html += '</div>';
 
         showModal(html);
     };
@@ -376,8 +388,19 @@
         var heroSkills = formation.skills ? formation.skills[heroId] : null;
         var isInFormation = formation.slots && formation.slots.indexOf(heroId) !== -1;
 
-        var html = '<div class="modal-title">' + (classData ? classData.icon : '') + ' ' + heroData.name + ' 详情</div>';
+        var html = '<div class="hero-detail-header-bar">';
+        html += '<div class="modal-title">' + (classData ? classData.icon : '') + ' ' + heroData.name + ' 详情</div>';
         html += '<button class="modal-close" onclick="window._hideHeroesModal()">✕</button>';
+        html += '</div>';
+
+        html += '<div class="hero-detail-layout">';
+        
+        if (heroData.cgImage) {
+            html += '<div class="hero-cg-container">';
+            html += '<img src="' + heroData.cgImage + '" alt="' + heroData.name + '" class="hero-cg-image" onerror="this.style.display=\'none\'">';
+            html += '<div class="hero-cg-name">' + heroData.name + '</div>';
+            html += '</div>';
+        }
 
         html += '<div class="hero-detail-content ' + rarityCls + '">';
 
@@ -467,6 +490,7 @@
         }
         html += '</div>';
 
+        html += '</div>';
         html += '</div>';
 
         showModal(html);
