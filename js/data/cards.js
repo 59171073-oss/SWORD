@@ -72,6 +72,198 @@ const EQUIPMENT_CARDS = [
         rarity: 'COMMON',
         bonus: { def: 5, agi: 5 },
         description: '铜质戒指，古朴厚重，佩戴后身法更为稳健。'
+    },
+    {
+        id: 'equip_005',
+        name: '青钢剑',
+        type: 'weapon',
+        rarity: 'FINE',
+        bonus: { atk: 20 },
+        description: '以青钢锻制而成，剑身泛着寒光，是江湖中人常用的兵器。'
+    },
+    {
+        id: 'equip_006',
+        name: '柳叶刀',
+        type: 'weapon',
+        rarity: 'FINE',
+        bonus: { atk: 15, agi: 5 },
+        description: '刀身轻盈如柳叶，挥舞起来如行云流水，身法愈加灵活。'
+    },
+    {
+        id: 'equip_007',
+        name: '铁骨扇',
+        type: 'weapon',
+        rarity: 'FINE',
+        bonus: { atk: 12, agi: 8 },
+        description: '扇骨以精铁打造，开合之间暗藏玄机，攻防兼备。'
+    },
+    {
+        id: 'equip_008',
+        name: '精钢护心镜',
+        type: 'armor',
+        rarity: 'FINE',
+        bonus: { def: 20 },
+        description: '精钢打造的护心镜，护于心脉要害，能挡致命一击。'
+    },
+    {
+        id: 'equip_009',
+        name: '轻罗软甲',
+        type: 'armor',
+        rarity: 'FINE',
+        bonus: { def: 12, agi: 8 },
+        description: '以天蚕丝编织而成，轻如无物，身法丝毫不受束缚。'
+    },
+    {
+        id: 'equip_010',
+        name: '锁子甲',
+        type: 'armor',
+        rarity: 'FINE',
+        bonus: { def: 18, hp: 20 },
+        description: '千锤百炼的铁环锁扣而成，防护周全，更增气血。'
+    },
+    {
+        id: 'equip_011',
+        name: '玉佩',
+        type: 'accessory',
+        rarity: 'FINE',
+        bonus: { hp: 30, agi: 5 },
+        description: '温润的羊脂白玉佩，佩戴者气血平和，身法轻盈。'
+    },
+    {
+        id: 'equip_012',
+        name: '青铜护腕',
+        type: 'accessory',
+        rarity: 'FINE',
+        bonus: { atk: 8, def: 8 },
+        description: '护腕以青铜打造，攻防兼备，是江湖武人的常用之物。'
+    },
+    {
+        id: 'equip_013',
+        name: '流云靴',
+        type: 'accessory',
+        rarity: 'FINE',
+        bonus: { agi: 15 },
+        description: '靴上绣有流云纹，步履如踏云而行，身法大幅提升。'
+    },
+    {
+        id: 'equip_014',
+        name: '流星锤',
+        type: 'weapon',
+        rarity: 'RARE',
+        bonus: { atk: 35, agi: 5 },
+        description: '链锤上刻有流星纹路，舞动起来如流星坠地，势不可挡。'
+    },
+    {
+        id: 'equip_015',
+        name: '真武剑',
+        type: 'weapon',
+        rarity: 'RARE',
+        bonus: { atk: 30, def: 10 },
+        description: '传闻为真武大帝所佩之剑的仿制品，刚柔并济，攻守兼备。'
+    },
+    {
+        id: 'equip_016',
+        name: '玉笛',
+        type: 'weapon',
+        rarity: 'RARE',
+        bonus: { atk: 25, agi: 12 },
+        description: '由千年暖玉雕琢而成，看似乐器，实则为致命的兵器。'
+    },
+    {
+        id: 'equip_017',
+        name: '紫金软甲',
+        type: 'armor',
+        rarity: 'RARE',
+        bonus: { def: 30, hp: 40 },
+        description: '以混有紫金的天蚕丝编织，防护超凡，更能补益气血。'
+    },
+    {
+        id: 'equip_018',
+        name: '八卦道袍',
+        type: 'armor',
+        rarity: 'RARE',
+        bonus: { def: 25, agi: 10, hp: 30 },
+        description: '道袍上绣有八卦图案，暗含天地玄机，护佑穿戴者。'
+    },
+    {
+        id: 'equip_019',
+        name: '乌金重甲',
+        type: 'armor',
+        rarity: 'RARE',
+        bonus: { def: 40, hp: 50 },
+        description: '以稀有乌金打造，重若千斤，却坚不可摧，气血旺盛。'
+    },
+    {
+        id: 'equip_020',
+        name: '千年灵芝坠',
+        type: 'accessory',
+        rarity: 'RARE',
+        bonus: { hp: 60, agi: 8 },
+        description: '以千年灵芝雕琢而成的吊坠，佩戴者气血充盈，身轻如燕。'
+    },
+    {
+        id: 'equip_021',
+        name: '七星护符',
+        type: 'accessory',
+        rarity: 'RARE',
+        bonus: { atk: 12, def: 12, agi: 8 },
+        description: '刻有北斗七星的神秘护符，攻防身法全方位提升。'
+    },
+    {
+        id: 'equip_022',
+        name: '风火轮',
+        type: 'accessory',
+        rarity: 'RARE',
+        bonus: { agi: 25, atk: 10 },
+        description: '传闻为哪吒法宝的仿制品，佩戴者身法如风，攻击如火。'
+    },
+    {
+        id: 'equip_023',
+        name: '轩辕剑',
+        type: 'weapon',
+        rarity: 'LEGEND',
+        bonus: { atk: 60, def: 15, agi: 10 },
+        description: '上古神兵轩辕剑，剑出则风云变色，乃天下第一剑。'
+    },
+    {
+        id: 'equip_024',
+        name: '屠龙刀',
+        type: 'weapon',
+        rarity: 'LEGEND',
+        bonus: { atk: 55, hp: 50 },
+        description: '武林至尊宝刀，宝刀一出，谁与争锋，气血亦随之强盛。'
+    },
+    {
+        id: 'equip_025',
+        name: '玄武神甲',
+        type: 'armor',
+        rarity: 'LEGEND',
+        bonus: { def: 55, hp: 80, agi: 10 },
+        description: '以玄武之鳞炼制，防御力天下无双，更能大幅补益气血。'
+    },
+    {
+        id: 'equip_026',
+        name: '凤羽霓裳',
+        type: 'armor',
+        rarity: 'LEGEND',
+        bonus: { def: 45, agi: 25, hp: 60 },
+        description: '以凤凰羽毛编织，轻盈如无物，身法超凡，气血充盈。'
+    },
+    {
+        id: 'equip_027',
+        name: '东皇钟碎片',
+        type: 'accessory',
+        rarity: 'LEGEND',
+        bonus: { atk: 20, def: 20, hp: 100, agi: 15 },
+        description: '上古神器东皇钟的碎片，蕴含无穷力量，全属性大幅提升。'
+    },
+    {
+        id: 'equip_028',
+        name: '九转还魂珠',
+        type: 'accessory',
+        rarity: 'LEGEND',
+        bonus: { hp: 150, agi: 20 },
+        description: '蕴含九转回魂之力的宝珠，佩戴者气血异常充盈，身轻如羽。'
     }
 ];
 
