@@ -1,266 +1,171 @@
-(function () {
-    var _currentChapter = GameState.state ? GameState.state.stageProgress.currentChapter : 1;
+const StagesUI = {
+    container: null,
+    currentChapter: 1,
 
-    function calculateEnemyPower(enemies) {
-        var total = 0;
-        for (var i = 0; i < enemies.length; i++) {
-            var s = enemies[i].stats;
-            total += s.hp + s.atk + s.def + (s.spd || s.agi);
-        }
-        return total;
-    }
+    init(containerId) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
+        this.render();
+    },
 
-    function getChapters() {
-        var map = {};
-        var list = [];
-        for (var i = 0; i < LEVELS.length; i++) {
-            var lv = LEVELS[i];
-            if (!map[lv.chapter]) {
-                map[lv.chapter] = true;
-                list.push({ chapter: lv.chapter, chapterName: lv.chapterName });
+    render() {
+        if (!this.container) return;
+
+        const chapters = this.getChapters();
+
+        this.container.innerHTML = `
+            <div class="stages-container">
+                <div class="stages-header">
+                    <h2>关卡</h2>
+                    <div class="chapter-tabs" id="chapter-tabs"></div>
+                </div>
+                <div class="stages-grid" id="stages-grid"></div>
+            </div>
+        `;
+
+        this.renderChapterTabs(chapters);
+        this.renderStages();
+    },
+
+    getChapters() {
+        const chapters = [];
+        const progress = GameState.state.stageProgress;
+
+        LEVELS.forEach(level => {
+            if (!chapters.find(c => c.id === level.chapter)) {
+                chapters.push({
+                    id: level.chapter,
+                    name: `第${level.chapter}章`
+                });
             }
+        });
+
+        if (progress.currentChapter) {
+            this.currentChapter = progress.currentChapter;
         }
-        return list;
-    }
 
-    function isChapterCleared(chapter) {
-        var stages = LEVELS.filter(function (s) { return s.chapter === chapter; });
-        for (var i = 0; i < stages.length; i++) {
-            if (!GameState.state.stageProgress.cleared[stages[i].id]) return false;
-        }
-        return true;
-    }
+        return chapters;
+    },
 
-    function renderChapterList() {
-        var container = document.getElementById('chapter-list');
-        if (!container) return;
-        container.innerHTML = '';
+    renderChapterTabs(chapters) {
+        const tabsContainer = document.getElementById('chapter-tabs');
+        if (!tabsContainer) return;
 
-        var chapters = getChapters();
-        for (var i = 0; i < chapters.length; i++) {
-            var ch = chapters[i];
-            var btn = document.createElement('button');
-            btn.className = 'chapter-btn';
-            if (ch.chapter === _currentChapter) btn.classList.add('active');
+        tabsContainer.innerHTML = chapters.map(chapter => `
+            <button class="chapter-tab ${chapter.id === this.currentChapter ? 'active' : ''}" data-chapter="${chapter.id}">
+                ${chapter.name}
+            </button>
+        `).join('');
 
-            var cleared = isChapterCleared(ch.chapter);
-            var label = '第' + ch.chapter + '章 · ' + ch.chapterName;
-            if (cleared) label += ' ✓';
-            btn.textContent = label;
+        tabsContainer.querySelectorAll('.chapter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabsContainer.querySelectorAll('.chapter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.currentChapter = parseInt(tab.dataset.chapter);
+                this.renderStages();
+            });
+        });
+    },
 
-            btn.addEventListener('click', (function (chapterNum) {
-                return function () {
-                    _currentChapter = chapterNum;
-                    renderChapterList();
-                    renderStageMap(chapterNum);
-                };
-            })(ch.chapter));
+    renderStages() {
+        const grid = document.getElementById('stages-grid');
+        if (!grid) return;
 
-            container.appendChild(btn);
-        }
-    }
+        const chapterLevels = LEVELS.filter(l => l.chapter === this.currentChapter);
 
-    function renderStageMap(chapter) {
-        var container = document.getElementById('stage-map');
-        if (!container) return;
-        container.innerHTML = '';
+        grid.innerHTML = chapterLevels.map(level => {
+            const isUnlocked = GameState.isStageUnlocked(level.id);
+            const isCleared = GameState.state.stageProgress.cleared[level.id];
+            const isFirstClear = GameState.state.firstClearBonus[level.id];
 
-        var stages = LEVELS.filter(function (s) { return s.chapter === chapter; });
-        if (stages.length === 0) {
-            container.innerHTML = '<div class="empty-state">暂无关卡</div>';
+            let statusClass = 'locked';
+            if (isCleared) statusClass = 'cleared';
+            else if (isUnlocked) statusClass = 'available';
+
+            let statusText = '未解锁';
+            if (isCleared) statusText = '已通关';
+            else if (isUnlocked) statusText = '可挑战';
+
+            let stageName = level.name || level.id;
+            if (level.story) {
+                stageName = level.story;
+            }
+
+            return `
+                <div class="stage-card ${statusClass}" data-stage-id="${level.id}">
+                    <div class="stage-header">
+                        <div class="stage-number">${level.id}</div>
+                        <div class="stage-status">${statusText}</div>
+                    </div>
+                    <div class="stage-name">${stageName}</div>
+                    <div class="stage-info">
+                        <div class="enemy-preview">
+                            ${level.enemies ? level.enemies.slice(0, 3).map(e => `<span class="enemy-icon">敌</span>`).join('') : ''}
+                        </div>
+                        <div class="stage-reward">
+                            <span class="reward-icon">金</span>
+                            <span class="reward-value">${level.baseReward}${isFirstClear ? '+200' : ''}</span>
+                        </div>
+                    </div>
+                    ${isCleared ? `<button class="quick-clear-btn" data-stage-id="${level.id}">快速通关</button>` : ''}
+                    ${isUnlocked && !isCleared ? `<button class="start-btn" data-stage-id="${level.id}">挑战</button>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        grid.querySelectorAll('.start-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const stageId = btn.dataset.stageId;
+                this.startStage(stageId);
+            });
+        });
+
+        grid.querySelectorAll('.quick-clear-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const stageId = btn.dataset.stageId;
+                this.quickClearStage(stageId);
+            });
+        });
+    },
+
+    startStage(stageId) {
+        const stage = LEVELS.find(s => s.id === stageId);
+        if (!stage) return;
+
+        const formation = GameState.getFormation();
+        if (!this.validateFormation(formation)) {
+            alert('请先配置阵型，至少需要上阵一名英雄或主角');
+            UIManager.showPanel('formation');
             return;
         }
 
-        for (var i = 0; i < stages.length; i++) {
-            var stage = stages[i];
-            var isCleared = !!GameState.state.stageProgress.cleared[stage.id];
-            var isUnlocked = GameState.isStageUnlocked(stage.id);
-            var isCurrent = isUnlocked && !isCleared;
+        BattleUI.init('battle-panel');
+        BattleUI.startBattle(formation, stage.enemies, stageId);
+        UIManager.showPanel('battle');
+    },
 
-            var node = document.createElement('div');
-            node.className = 'stage-node';
-            if (isCleared) node.classList.add('cleared');
-            else if (isCurrent) node.classList.add('current');
-            else if (!isUnlocked) node.classList.add('locked');
-
-            var stageNum = i + 1;
-            var numberDiv = document.createElement('div');
-            numberDiv.className = 'stage-number';
-            if (isCleared) numberDiv.textContent = '✓';
-            else if (!isUnlocked) numberDiv.textContent = '🔒';
-            else numberDiv.textContent = stageNum;
-
-            var infoDiv = document.createElement('div');
-            infoDiv.className = 'stage-info';
-
-            var nameDiv = document.createElement('div');
-            nameDiv.className = 'stage-name';
-            nameDiv.textContent = stage.stageName;
-
-            var rewardDiv = document.createElement('div');
-            rewardDiv.className = 'stage-reward';
-            var enemyPower = calculateEnemyPower(stage.enemies);
-            rewardDiv.textContent = '💰 ' + stage.baseReward + '  ⚔ 战力 ' + enemyPower;
-
-            infoDiv.appendChild(nameDiv);
-            infoDiv.appendChild(rewardDiv);
-
-            var statusDiv = document.createElement('div');
-            statusDiv.className = 'stage-status';
-            if (isCleared) statusDiv.textContent = '已通关';
-            else if (isCurrent) statusDiv.textContent = '可挑战';
-            else statusDiv.textContent = '未解锁';
-
-            node.appendChild(numberDiv);
-            node.appendChild(infoDiv);
-            node.appendChild(statusDiv);
-
-            if (isCurrent) {
-                node.addEventListener('click', (function (sid) {
-                    return function () {
-                        showStageDetail(sid);
-                    };
-                })(stage.id));
-            } else if (isCleared) {
-                node.addEventListener('click', (function (sid) {
-                    return function () {
-                        showStageDetail(sid);
-                    };
-                })(stage.id));
-            }
-
-            container.appendChild(node);
+    quickClearStage(stageId) {
+        const result = GameState.quickClearStage(stageId);
+        if (!result.success) {
+            alert(result.message);
+            return;
         }
+
+        const stage = LEVELS.find(s => s.id === stageId);
+        let message = `快速通关成功！\n获得金币: ${result.reward.gold}`;
+        if (stage && stage.taskCardId) {
+            message += `\n获得任务卡: ${stage.taskCardId}`;
+        }
+        alert(message);
+        this.renderStages();
+    },
+
+    validateFormation(formation) {
+        if (!formation || !formation.slots) return false;
+
+        const hasHero = formation.slots.some(id => id !== null);
+        return true;
     }
+};
 
-    function showStageDetail(stageId) {
-        var stage = LEVELS.find(function (s) { return s.id === stageId; });
-        if (!stage) return;
-
-        var isCleared = !!GameState.state.stageProgress.cleared[stageId];
-        var isUnlocked = GameState.isStageUnlocked(stageId);
-        var isFirstClear = !GameState.state.firstClearBonus[stageId];
-        var enemyPower = calculateEnemyPower(stage.enemies);
-        var myPower = GameState.getTeamPower();
-
-        var html = '<div class="stage-detail">';
-
-        html += '<div class="detail-section" style="margin-bottom:16px;">';
-        html += '<div style="font-size:14px;color:var(--gold);letter-spacing:2px;margin-bottom:10px;text-align:center;">敌方阵容</div>';
-
-        html += '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">';
-        for (var i = 0; i < stage.enemies.length; i++) {
-            var e = stage.enemies[i];
-            var classInfo = CLASSES[e.classId];
-            var rarityInfo = RARITY[e.rarity];
-            var elementIcon = ELEMENT_ICONS[e.element] || '';
-
-            html += '<div style="width:70px;text-align:center;padding:6px 4px;background:rgba(0,0,0,0.2);border:1px solid ' + (rarityInfo ? rarityInfo.color : 'var(--border-ancient)') + ';border-radius:var(--radius-sm);">';
-            html += '<div style="font-size:28px;margin-bottom:2px;">' + (classInfo ? classInfo.icon : '❓') + '</div>';
-            html += '<div style="font-size:10px;color:var(--parchment);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + e.name + '</div>';
-            html += '<div style="font-size:9px;color:var(--cyan-gray);">' + (classInfo ? classInfo.name : '') + '</div>';
-            html += '<div style="font-size:9px;">' + elementIcon + ' ' + e.element + '</div>';
-            html += '<div style="font-size:9px;color:var(--gold);">Lv.' + e.level + '</div>';
-            html += '</div>';
-        }
-        html += '</div>';
-        html += '</div>';
-
-        html += '<div style="display:flex;justify-content:space-between;padding:10px 12px;background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);margin-bottom:12px;">';
-        html += '<div style="font-size:13px;"><span style="color:var(--vermilion);">敌方战力</span> <span style="color:var(--parchment);font-weight:bold;">' + enemyPower + '</span></div>';
-        html += '<div style="font-size:13px;"><span style="color:var(--jade);">我方战力</span> <span style="color:var(--parchment);font-weight:bold;">' + myPower + '</span></div>';
-        html += '</div>';
-
-        var powerCompare = myPower >= enemyPower;
-        html += '<div style="text-align:center;font-size:12px;margin-bottom:12px;color:' + (powerCompare ? 'var(--jade)' : 'var(--vermilion)') + ';">';
-        html += powerCompare ? '✦ 战力占优，胜算在握' : '⚠ 战力不足，谨慎出征';
-        html += '</div>';
-
-        html += '<div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(212,160,23,0.08);border:1px solid rgba(212,160,23,0.2);border-radius:var(--radius-sm);margin-bottom:8px;">';
-        html += '<span style="font-size:12px;color:var(--cyan-gray);">通关奖励</span>';
-        html += '<span style="font-size:12px;color:var(--gold);">💰 ' + stage.baseReward + '</span>';
-        html += '</div>';
-
-        if (isFirstClear && !isCleared) {
-            html += '<div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:var(--radius-sm);margin-bottom:8px;">';
-            html += '<span style="font-size:12px;color:var(--jade);">🌟 首次通关</span>';
-            html += '<span style="font-size:12px;color:var(--jade);">💰 +' + stage.baseReward + '</span>';
-            html += '</div>';
-        }
-
-        if (stage.taskCardId) {
-            var taskCard = TASK_CARDS.find(function (t) { return t.id === stage.taskCardId; });
-            if (taskCard) {
-                html += '<div style="padding:10px 12px;background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.2);border-radius:var(--radius-sm);margin-bottom:8px;">';
-                html += '<div style="font-size:12px;color:var(--purple);margin-bottom:4px;">📜 任务卡 · ' + taskCard.name + '</div>';
-                html += '<div style="font-size:11px;color:var(--cyan-gray);margin-bottom:4px;">条件：' + taskCard.condition + '</div>';
-                html += '<div style="font-size:11px;color:var(--gold);">奖励：';
-                if (taskCard.reward.gold) html += '💰 ' + taskCard.reward.gold;
-                if (taskCard.reward.cardRarity) html += '🎴 ' + RARITY[taskCard.reward.cardRarity].name + '卡牌';
-                html += '</div>';
-                html += '</div>';
-            }
-        }
-
-        if (isCleared) {
-            html += '<div style="text-align:center;font-size:13px;color:var(--jade);margin-top:8px;letter-spacing:2px;">✅ 已通关</div>';
-        }
-
-        html += '</div>';
-
-        var onConfirm = null;
-        if (isUnlocked && !isCleared) {
-            onConfirm = function () {
-                if (typeof startBattle === 'function') {
-                    startBattle(stageId);
-                }
-            };
-        } else if (isCleared) {
-            onConfirm = function () {
-                if (typeof startBattle === 'function') {
-                    startBattle(stageId);
-                }
-            };
-        }
-
-        var confirmText = isCleared ? '再战' : '出征';
-        showModal(stage.stageName, html, onConfirm ? function () { onConfirm(); } : null);
-
-        if (onConfirm) {
-            var confirmBtn = document.getElementById('modal-confirm-btn');
-            if (confirmBtn) confirmBtn.textContent = confirmText;
-            
-            var cancelBtn = document.getElementById('modal-cancel-btn');
-            if (isCleared && cancelBtn) {
-                cancelBtn.textContent = '快速通关';
-                cancelBtn.style.background = 'linear-gradient(180deg,#1e8449,#145a32)';
-                cancelBtn.style.borderColor = '#2ecc71';
-                cancelBtn.onclick = function () {
-                    var result = GameState.quickClearStage(stageId);
-                    if (result && result.success) {
-                        window.showToast('快速通关成功！获得 💰' + result.reward.gold);
-                        window.updateStatusBar();
-                        window.hideModal();
-                    } else if (result) {
-                        window.showToast(result.message || '快速通关失败', 'error');
-                    }
-                };
-            }
-        }
-    }
-
-    function renderStages() {
-        if (!GameState.state) return;
-        _currentChapter = GameState.state.stageProgress.currentChapter;
-        renderChapterList();
-        renderStageMap(_currentChapter);
-    }
-
-    window._currentChapter = _currentChapter;
-    window.renderStages = renderStages;
-    window.renderStagesPage = renderStages;
-    window.renderChapterList = renderChapterList;
-    window.renderStageMap = renderStageMap;
-    window.showStageDetail = showStageDetail;
-    window.calculateEnemyPower = calculateEnemyPower;
-})();
+window.StagesUI = StagesUI;

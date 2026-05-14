@@ -1,358 +1,225 @@
-(function () {
-    var GACHA_COST_SINGLE = 100;
-    var GACHA_COST_TEN = 900;
+const GachaUI = {
+    container: null,
 
-    var RARITY_ORDER = { COMMON: 0, FINE: 1, RARE: 2, LEGEND: 3 };
-    var RARITY_NAMES = { COMMON: '普通', FINE: '精良', RARE: '稀有', LEGEND: '传说' };
-    var TYPE_ICONS = { hero: '🗡️', weapon: '⚔️', armor: '🛡️', accessory: '💍', skill: '📖' };
-    var TYPE_NAMES = { hero: '人物', weapon: '武器', armor: '护甲', accessory: '饰品', skill: '秘籍' };
+    init(containerId) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
+        this.render();
+    },
 
-    var _gachaAnimating = false;
+    render() {
+        if (!this.container) return;
 
-    function getCardPool(type, rarity) {
-        if (type === 'hero') return CHARACTER_CARDS.filter(function (c) { return c.rarity === rarity; });
-        if (type === 'weapon') return EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity && c.type === 'weapon'; });
-        if (type === 'armor') return EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity && c.type === 'armor'; });
-        if (type === 'accessory') return EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity && c.type === 'accessory'; });
-        if (type === 'skill') return SKILL_CARDS.filter(function (c) { return c.rarity === rarity; });
-        return [];
-    }
+        const gold = GameState.state.gold;
+        const canFreeGacha = !GameState.state.firstGachaUsed;
 
-    function pickRarity() {
-        var r = Math.random();
-        var probs = GACHA_CONFIG.rarityProbability;
-        if (r < probs.LEGEND) return 'LEGEND';
-        if (r < probs.LEGEND + probs.RARE) return 'RARE';
-        if (r < probs.LEGEND + probs.RARE + probs.FINE) return 'FINE';
-        return 'COMMON';
-    }
+        this.container.innerHTML = `
+            <div class="gacha-container">
+                <div class="gacha-header">
+                    <h2>抽卡</h2>
+                    <div class="gold-display">金币: ${gold}</div>
+                </div>
+                <div class="gacha-pools">
+                    <div class="pool-section">
+                        <h3>角色池</h3>
+                        <div class="pool-rates">
+                            <div class="rate-item"><span class="rate-label">普通:</span> 60%</div>
+                            <div class="rate-item"><span class="rate-label">精良:</span> 25%</div>
+                            <div class="rate-item"><span class="rate-label">稀有:</span> 12%</div>
+                            <div class="rate-item"><span class="rate-label">传说:</span> 3%</div>
+                        </div>
+                        <div class="gacha-buttons">
+                            ${canFreeGacha ? '<button class="gacha-btn free-btn" id="free-gacha-btn">免费抽取</button>' : ''}
+                            <button class="gacha-btn" id="gacha-10-btn">十连抽 (1000金币)</button>
+                            <button class="gacha-btn" id="gacha-1-btn">单抽 (100金币)</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="gacha-history" id="gacha-history">
+                    <h3>最近抽取</h3>
+                    <div class="history-list" id="history-list"></div>
+                </div>
+            </div>
+        `;
 
-    function pickType() {
-        var r = Math.random();
-        var probs = GACHA_CONFIG.typeProbability;
-        var cumulative = 0;
-        cumulative += probs.hero;
-        if (r < cumulative) return 'hero';
-        cumulative += probs.skill;
-        if (r < cumulative) return 'skill';
-        cumulative += probs.accessory;
-        if (r < cumulative) return 'accessory';
-        cumulative += probs.armor;
-        if (r < cumulative) return 'armor';
-        return 'weapon';
-    }
+        this.bindEvents();
+    },
 
-    function gachaRoll(count) {
-        var results = [];
-        for (var i = 0; i < count; i++) {
-            var type = pickType();
-            var rarity = pickRarity();
-            var pool = getCardPool(type, rarity);
-            if (pool.length === 0) {
-                var fallbackOrder = ['FINE', 'RARE', 'COMMON', 'LEGEND'];
-                for (var f = 0; f < fallbackOrder.length; f++) {
-                    pool = getCardPool(type, fallbackOrder[f]);
-                    if (pool.length > 0) {
-                        rarity = fallbackOrder[f];
-                        break;
-                    }
-                }
-            }
-            if (pool.length === 0) {
-                var typeOrder = ['weapon', 'armor', 'accessory', 'skill', 'hero'];
-                for (var t = 0; t < typeOrder.length; t++) {
-                    for (var ri = 0; ri < fallbackOrder.length; ri++) {
-                        pool = getCardPool(typeOrder[t], fallbackOrder[ri]);
-                        if (pool.length > 0) {
-                            type = typeOrder[t];
-                            rarity = fallbackOrder[ri];
-                            break;
-                        }
-                    }
-                    if (pool.length > 0) break;
-                }
-            }
-            if (pool.length === 0) continue;
-            var card = pool[Math.floor(Math.random() * pool.length)];
-            var resultType = type;
-            if (type === 'weapon' || type === 'armor' || type === 'accessory') {
-                resultType = 'equip';
-            }
-            results.push({ cardId: card.id, type: resultType, originalType: type, rarity: rarity });
+    bindEvents() {
+        const freeBtn = document.getElementById('free-gacha-btn');
+        if (freeBtn) {
+            freeBtn.addEventListener('click', () => this.doFreeGacha());
         }
-        return results;
-    }
 
-    function doGacha(count) {
-        if (_gachaAnimating) return;
-        var cost = count === 10 ? GACHA_COST_TEN : GACHA_COST_SINGLE;
-        var isFirstFree = (count === 1 && !GameState.state.firstGachaUsed);
+        const gacha10Btn = document.getElementById('gacha-10-btn');
+        if (gacha10Btn) {
+            gacha10Btn.addEventListener('click', () => this.doGacha(10));
+        }
 
-        if (!isFirstFree && GameState.state.gold < cost) {
-            showToast('金币不足', 'error');
+        const gacha1Btn = document.getElementById('gacha-1-btn');
+        if (gacha1Btn) {
+            gacha1Btn.addEventListener('click', () => this.doGacha(1));
+        }
+    },
+
+    doFreeGacha() {
+        const card = this.drawCard('hero');
+        GameState.state.firstGachaUsed = true;
+        GameState.save();
+        this.showGachaResult([card]);
+        this.updateGoldDisplay();
+        this.render();
+    },
+
+    doGacha(count) {
+        const cost = count === 10 ? 1000 : 100;
+        if (!GameState.spendGold(cost)) {
+            alert('金币不足！');
             return;
         }
-        _gachaAnimating = true;
-        setGachaButtonsDisabled(true);
 
-        if (isFirstFree) {
-            GameState.state.firstGachaUsed = true;
-            GameState.save();
+        const cards = [];
+        for (let i = 0; i < count; i++) {
+            cards.push(this.drawCard('random'));
+        }
+
+        this.showGachaResult(cards);
+        this.updateGoldDisplay();
+        this.render();
+    },
+
+    drawCard(type) {
+        const rarityRoll = Math.random();
+        let rarity;
+        if (rarityRoll < 0.03) {
+            rarity = 'LEGEND';
+        } else if (rarityRoll < 0.15) {
+            rarity = 'RARE';
+        } else if (rarityRoll < 0.40) {
+            rarity = 'FINE';
         } else {
-            GameState.spendGold(cost);
+            rarity = 'COMMON';
         }
-        updateGoldDisplay();
 
-        var results;
-        if (isFirstFree && count === 1) {
-            var ziwei = CHARACTER_CARDS.find(function(c) { return c.id === 'char_002'; });
-            if (ziwei) {
-                results = [{ cardId: ziwei.id, type: 'hero', originalType: 'hero', rarity: ziwei.rarity }];
-            } else {
-                results = gachaRoll(count);
+        if (type === 'hero') {
+            const heroCards = CHARACTER_CARDS.filter(c => c.rarity === rarity);
+            if (heroCards.length > 0) {
+                const selected = heroCards[Math.floor(Math.random() * heroCards.length)];
+                GameState.addCard(selected.id, 'hero', rarity);
+                return { ...selected, rarity };
             }
+        }
+
+        const typeRoll = Math.random();
+        let cardType;
+        if (typeRoll < 0.30) {
+            cardType = 'weapon';
+        } else if (typeRoll < 0.60) {
+            cardType = 'armor';
+        } else if (typeRoll < 0.80) {
+            cardType = 'accessory';
+        } else if (typeRoll < 0.92) {
+            cardType = 'skill';
         } else {
-            results = gachaRoll(count);
+            cardType = 'hero';
         }
 
-        if (count === 10) {
-            var allCommon = results.every(function (r) { return r.rarity === 'COMMON'; });
-            if (allCommon && results.length > 0) {
-                var last = results[results.length - 1];
-                var finePool = getCardPool(last.originalType || last.type, 'FINE');
-                if (finePool.length > 0) {
-                    var replacement = finePool[Math.floor(Math.random() * finePool.length)];
-                    results[results.length - 1] = { cardId: replacement.id, type: last.type, originalType: last.originalType, rarity: 'FINE' };
-                }
+        let cardPool;
+        switch (cardType) {
+            case 'weapon': cardPool = EQUIPMENT_CARDS.filter(c => c.rarity === rarity); break;
+            case 'armor': cardPool = EQUIPMENT_CARDS.filter(c => c.rarity === rarity); break;
+            case 'accessory': cardPool = EQUIPMENT_CARDS.filter(c => c.rarity === rarity); break;
+            case 'skill': cardPool = SKILL_CARDS.filter(c => c.rarity === rarity); break;
+            case 'hero': cardPool = CHARACTER_CARDS.filter(c => c.rarity === rarity); break;
+            default: cardPool = [];
+        }
+
+        if (cardPool.length > 0) {
+            const selected = cardPool[Math.floor(Math.random() * cardPool.length)];
+            GameState.addCard(selected.id, cardType, rarity);
+            return { ...selected, rarity };
+        }
+
+        const fallbackCards = EQUIPMENT_CARDS.filter(c => c.rarity === 'COMMON');
+        if (fallbackCards.length > 0) {
+            const selected = fallbackCards[Math.floor(Math.random() * fallbackCards.length)];
+            GameState.addCard(selected.id, 'weapon', 'COMMON');
+            return { ...selected, rarity: 'COMMON' };
+        }
+
+        return null;
+    },
+
+    showGachaResult(cards) {
+        const overlay = document.createElement('div');
+        overlay.className = 'gacha-overlay';
+
+        const cardsHtml = cards.map(card => {
+            if (!card) return '';
+            const rarityData = RARITY[card.rarity];
+            let typeLabel = '';
+            switch (card.type || card.classId) {
+                case 'weapon': typeLabel = '武器'; break;
+                case 'armor': typeLabel = '防具'; break;
+                case 'accessory': typeLabel = '饰品'; break;
+                case 'skill': typeLabel = '武学'; break;
+                default: typeLabel = '英雄';
             }
-        }
 
-        var upgradeInfo = [];
-        results.forEach(function (r) {
-            var existing = GameState.state.collection[r.cardId];
-            var isUpgrade = !!(existing && existing.rarity === r.rarity);
-            GameState.addCard(r.cardId, r.type, r.rarity);
-            upgradeInfo.push(isUpgrade);
-        });
+            return `
+                <div class="gacha-card rarity-${card.rarity.toLowerCase()}">
+                    <div class="card-rarity" style="color: ${rarityData.color}">${rarityData.name}</div>
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-type">${typeLabel}</div>
+                    <div class="card-effect">${card.effect || card.description || ''}</div>
+                </div>
+            `;
+        }).join('');
 
-        showGachaResult(results, upgradeInfo);
-    }
+        overlay.innerHTML = `
+            <div class="gacha-result-modal">
+                <h2>恭喜获得</h2>
+                <div class="gacha-cards">${cardsHtml}</div>
+                <button class="gacha-close-btn" id="gacha-close-btn">确定</button>
+            </div>
+        `;
 
-    function renderGacha() {
-        var page = document.getElementById('page-gacha');
-        if (!page) return;
-
-        var gold = GameState.state.gold;
-        document.getElementById('gacha-gold').textContent = gold;
-
-        var btnSingle = document.getElementById('btn-gacha-single');
-        var btnTen = document.getElementById('btn-gacha-ten');
-
-        if (btnSingle) {
-            btnSingle.disabled = gold < GACHA_COST_SINGLE;
-            btnSingle.onclick = function () { doGacha(1); };
-        }
-        if (btnTen) {
-            btnTen.disabled = gold < GACHA_COST_TEN;
-            btnTen.onclick = function () { doGacha(10); };
-        }
-
-        var resultsContainer = document.getElementById('gacha-results');
-        if (resultsContainer && !resultsContainer.hasChildNodes()) {
-            resultsContainer.innerHTML = '<div class="gacha-prayer"><div class="prayer-icon">🎴</div><div class="prayer-text">祈愿池</div><div class="prayer-sub">江湖豪杰，尽入麾下</div></div>';
-        }
-
-        renderGachaRates();
-    }
-
-    function renderGachaRates() {
-        var page = document.getElementById('page-gacha');
-        var existing = page.querySelector('.gacha-rates-detail');
-        if (existing) existing.remove();
-
-        var wrapper = document.createElement('div');
-        wrapper.className = 'gacha-rates-detail';
-
-        var toggle = document.createElement('div');
-        toggle.className = 'rates-toggle';
-        toggle.innerHTML = '<span class="rates-toggle-text">概率详情</span><span class="rates-toggle-arrow">▼</span>';
-        toggle.onclick = function () {
-            var body = wrapper.querySelector('.rates-body');
-            var arrow = toggle.querySelector('.rates-toggle-arrow');
-            if (body.style.display === 'none') {
-                body.style.display = 'block';
-                arrow.textContent = '▲';
-            } else {
-                body.style.display = 'none';
-                arrow.textContent = '▼';
-            }
-        };
-
-        var body = document.createElement('div');
-        body.className = 'rates-body';
-        body.style.display = 'none';
-
-        var typeProbs = GACHA_CONFIG.typeProbability;
-        var rarityProbs = GACHA_CONFIG.rarityProbability;
-
-        body.innerHTML =
-            '<div class="rates-section">' +
-                '<div class="rates-section-title">卡牌类型</div>' +
-                '<div class="rates-row"><span>⚔️ 武器</span><span>' + (typeProbs.weapon * 100) + '%</span></div>' +
-                '<div class="rates-row"><span>🛡️ 护甲</span><span>' + (typeProbs.armor * 100) + '%</span></div>' +
-                '<div class="rates-row"><span>💍 饰品</span><span>' + (typeProbs.accessory * 100) + '%</span></div>' +
-                '<div class="rates-row"><span>📖 秘籍</span><span>' + (typeProbs.skill * 100) + '%</span></div>' +
-                '<div class="rates-row"><span>🗡️ 角色</span><span>' + (typeProbs.hero * 100) + '%</span></div>' +
-            '</div>' +
-            '<div class="rates-section">' +
-                '<div class="rates-section-title">稀有度</div>' +
-                '<div class="rates-row"><span style="color:var(--rarity-common)">普通</span><span>' + (rarityProbs.COMMON * 100) + '%</span></div>' +
-                '<div class="rates-row"><span style="color:var(--rarity-fine)">精良</span><span>' + (rarityProbs.FINE * 100) + '%</span></div>' +
-                '<div class="rates-row"><span style="color:var(--rarity-rare)">稀有</span><span>' + (rarityProbs.RARE * 100) + '%</span></div>' +
-                '<div class="rates-row"><span style="color:var(--rarity-legend)">传说</span><span>' + (rarityProbs.LEGEND * 100) + '%</span></div>' +
-            '</div>' +
-            '<div class="rates-note">十连招募保底：若十张皆为普通，最后一张提升为精良</div>';
-
-        wrapper.appendChild(toggle);
-        wrapper.appendChild(body);
-
-        var gachaInfo = page.querySelector('.gacha-info');
-        if (gachaInfo) {
-            gachaInfo.parentNode.insertBefore(wrapper, gachaInfo.nextSibling);
-        }
-    }
-
-    function showGachaResult(results, upgradeInfo) {
-        var overlay = document.createElement('div');
-        overlay.className = 'gacha-result-overlay';
-
-        var container = document.createElement('div');
-        container.className = 'gacha-result-container';
-
-        var title = document.createElement('div');
-        title.className = 'gacha-result-title';
-        title.textContent = results.length === 1 ? '招募结果' : '十连招募';
-        container.appendChild(title);
-
-        var cardsWrap = document.createElement('div');
-        cardsWrap.className = 'gacha-result-cards';
-        if (results.length === 1) {
-            cardsWrap.classList.add('single-result');
-        }
-
-        var hasLegend = results.some(function (r) { return r.rarity === 'LEGEND'; });
-
-        results.forEach(function (result, index) {
-            var cardData = findCardData(result.cardId, result.type);
-            if (!cardData) return;
-
-            var isUpgrade = upgradeInfo[index];
-            var isNew = !isUpgrade;
-
-            var cardEl = document.createElement('div');
-            cardEl.className = 'gacha-flip-card';
-            cardEl.style.animationDelay = (index * 200) + 'ms';
-
-            var inner = document.createElement('div');
-            inner.className = 'gacha-flip-inner';
-
-            var back = document.createElement('div');
-            back.className = 'gacha-flip-back';
-            back.innerHTML = '<div class="flip-back-pattern">🎴</div>';
-
-            var front = document.createElement('div');
-            front.className = 'gacha-flip-front rarity-' + result.rarity.toLowerCase();
-            if (isNew) front.classList.add('new-card');
-            if (isUpgrade) front.classList.add('upgraded');
-
-            var icon = TYPE_ICONS[result.originalType] || TYPE_ICONS[result.type] || '🎴';
-            var rarityClass = 'rarity-' + result.rarity.toLowerCase();
-
-            front.innerHTML =
-                '<div class="flip-card-icon">' + icon + '</div>' +
-                '<div class="flip-card-name">' + cardData.name + '</div>' +
-                '<div class="flip-card-rarity ' + rarityClass + '">' + RARITY_NAMES[result.rarity] + '</div>' +
-                (isUpgrade ? '<div class="flip-card-upgrade">升级！</div>' : '');
-
-            inner.appendChild(back);
-            inner.appendChild(front);
-            cardEl.appendChild(inner);
-            cardsWrap.appendChild(cardEl);
-        });
-
-        container.appendChild(cardsWrap);
-
-        var confirmBtn = document.createElement('button');
-        confirmBtn.className = 'btn-ancient gacha-confirm-btn';
-        confirmBtn.textContent = '确认';
-        confirmBtn.style.display = 'none';
-        confirmBtn.onclick = function () {
-            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-            _gachaAnimating = false;
-            setGachaButtonsDisabled(false);
-            renderGacha();
-        };
-        container.appendChild(confirmBtn);
-
-        overlay.appendChild(container);
         document.body.appendChild(overlay);
 
-        if (hasLegend) {
-            triggerLegendEffect(overlay);
+        document.getElementById('gacha-close-btn').addEventListener('click', () => {
+            overlay.remove();
+        });
+
+        this.addToHistory(cards);
+    },
+
+    addToHistory(cards) {
+        const historyList = document.getElementById('history-list');
+        if (!historyList) return;
+
+        cards.forEach(card => {
+            if (!card) return;
+            const rarityData = RARITY[card.rarity];
+            const entry = document.createElement('div');
+            entry.className = `history-item rarity-${card.rarity.toLowerCase()}`;
+            entry.innerHTML = `
+                <span class="history-rarity" style="color: ${rarityData.color}">${rarityData.name}</span>
+                <span class="history-name">${card.name}</span>
+            `;
+            historyList.insertBefore(entry, historyList.firstChild);
+        });
+
+        while (historyList.children.length > 10) {
+            historyList.removeChild(historyList.lastChild);
         }
+    },
 
-        var totalDelay = (results.length - 1) * 200 + 600;
-        setTimeout(function () {
-            confirmBtn.style.display = 'inline-flex';
-        }, totalDelay);
+    updateGoldDisplay() {
+        const goldDisplay = this.container.querySelector('.gold-display');
+        if (goldDisplay) {
+            goldDisplay.textContent = `金币: ${GameState.state.gold}`;
+        }
     }
+};
 
-    function findCardData(cardId, type) {
-        if (type === 'hero') return CHARACTER_CARDS.find(function (c) { return c.id === cardId; });
-        if (type === 'equip') return EQUIPMENT_CARDS.find(function (c) { return c.id === cardId; });
-        if (type === 'skill') return SKILL_CARDS.find(function (c) { return c.id === cardId; });
-        return null;
-    }
-
-    function triggerLegendEffect(overlay) {
-        var flash = document.createElement('div');
-        flash.className = 'legend-flash';
-        overlay.appendChild(flash);
-        setTimeout(function () {
-            if (flash.parentNode) flash.parentNode.removeChild(flash);
-        }, 1200);
-    }
-
-    function setGachaButtonsDisabled(disabled) {
-        var btnSingle = document.getElementById('btn-gacha-single');
-        var btnTen = document.getElementById('btn-gacha-ten');
-        if (btnSingle) btnSingle.disabled = disabled;
-        if (btnTen) btnTen.disabled = disabled;
-    }
-
-    function updateGoldDisplay() {
-        var gachaGold = document.getElementById('gacha-gold');
-        var goldDisplay = document.getElementById('gold-display');
-        if (gachaGold) gachaGold.textContent = GameState.state.gold;
-        if (goldDisplay) goldDisplay.textContent = GameState.state.gold;
-    }
-
-    function showToast(message, type) {
-        var existing = document.querySelector('.toast');
-        if (existing) existing.remove();
-
-        var toast = document.createElement('div');
-        toast.className = 'toast' + (type === 'error' ? ' toast-error' : '');
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(function () {
-            if (toast.parentNode) toast.parentNode.removeChild(toast);
-        }, 2500);
-    }
-
-    window.renderGacha = renderGacha;
-    window.doGacha = doGacha;
-    window.gachaRoll = gachaRoll;
-    window.showGachaResult = showGachaResult;
-    window.renderGachaPage = renderGacha;
-})();
+window.GachaUI = GachaUI;
