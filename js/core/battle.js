@@ -339,7 +339,31 @@ var BattleEngine = {
         var self = this;
         var totalDamageDealt = 0;
 
+        var cardData = CHARACTER_CARDS.find(function(c) { return c.id === unit.id; });
+        var isHealer = cardData && cardData.isHealer;
+
         var activeSkill = this._selectActiveSkill(unit);
+        
+        if (!activeSkill && isHealer) {
+            var healAmount = Math.floor(unit.atk * (cardData.healMultiplier || 0.3));
+            var allies = this._state.units.filter(function(u) {
+                return u.side === unit.side && u.alive && u.currentHp < u.maxHp;
+            });
+            if (allies.length > 0) {
+                allies.sort(function(a, b) { return a.currentHp - b.currentHp; });
+                var target = allies[0];
+                var actualHeal = Math.min(healAmount, target.maxHp - target.currentHp);
+                target.currentHp += actualHeal;
+                actionInfo.type = 'heal';
+                actionInfo.heal = actualHeal;
+                actionInfo.target = { id: target.id, name: target.name, side: target.side };
+                actionInfo.results.push({
+                    target: actionInfo.target,
+                    heal: actualHeal
+                });
+                return actionInfo;
+            }
+        }
 
         if (activeSkill) {
             var skill = activeSkill;

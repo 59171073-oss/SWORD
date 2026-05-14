@@ -102,19 +102,8 @@ const GameState = {
 
     addCard(cardId, type, rarity) {
         const existing = this.state.collection[cardId];
-        var maxLevel;
-        if (type === 'hero') {
-            maxLevel = 20;
-        } else if (type === 'skill') {
-            maxLevel = 10;
-        } else {
-            maxLevel = 5;
-        }
         if (existing && existing.rarity === rarity) {
             existing.count += 1;
-            if (existing.level < maxLevel) {
-                existing.level += 1;
-            }
         } else {
             this.state.collection[cardId] = {
                 id: cardId,
@@ -125,6 +114,33 @@ const GameState = {
             };
         }
         this.save();
+    },
+
+    upgradeCard(cardId) {
+        const entry = this.state.collection[cardId];
+        if (!entry || entry.count <= 1) return false;
+        
+        var maxLevel;
+        if (entry.type === 'hero') {
+            maxLevel = 20;
+        } else if (entry.type === 'skill') {
+            maxLevel = 10;
+        } else {
+            maxLevel = 5;
+        }
+        
+        if (entry.level >= maxLevel) return false;
+        
+        entry.count -= 1;
+        entry.level += 1;
+        this.save();
+        return true;
+    },
+    
+    getCardMaxLevel(type) {
+        if (type === 'hero') return 20;
+        if (type === 'skill') return 10;
+        return 5;
     },
 
     getHeroStats(heroInstanceId, formationContext) {

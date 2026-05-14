@@ -105,9 +105,9 @@
 
         var results;
         if (isFirstFree && count === 1) {
-            var jiading = CHARACTER_CARDS.find(function(c) { return c.id === 'char_001'; });
-            if (jiading) {
-                results = [{ cardId: jiading.id, type: 'hero', originalType: 'hero', rarity: jiading.rarity }];
+            var ziwei = CHARACTER_CARDS.find(function(c) { return c.id === 'char_002'; });
+            if (ziwei) {
+                results = [{ cardId: ziwei.id, type: 'hero', originalType: 'hero', rarity: ziwei.rarity }];
             } else {
                 results = gachaRoll(count);
             }

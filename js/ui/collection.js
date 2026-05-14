@@ -308,10 +308,17 @@
         if (entry.type !== 'task') {
             var sellPrice = GameState.getCardSellPrice(cardId);
             var isEquipped = GameState.isCardEquipped(cardId);
+            var canUpgrade = entry.count > 1 && !isMaxLevel && !isEquipped;
+            
             html += '<div class="detail-actions" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(212,160,23,0.2);">';
             if (isEquipped) {
-                html += '<div style="font-size:11px;color:var(--vermilion);margin-bottom:8px;">该卡牌已装备，请先卸下后再出售</div>';
+                html += '<div style="font-size:11px;color:var(--vermilion);margin-bottom:8px;">该卡牌已装备，请先卸下后再操作</div>';
             } else {
+                if (canUpgrade) {
+                    html += '<button class="btn-ancient btn-upgrade-card" data-card-id="' + cardId + '" style="background:linear-gradient(180deg,#27ae60,#1e8449);margin-bottom:8px;">';
+                    html += '⬆️ 升级 (消耗1张)';
+                    html += '</button>';
+                }
                 html += '<button class="btn-ancient btn-sell-card" data-card-id="' + cardId + '" style="background:linear-gradient(180deg,#8b1a1a,#5c1010);">';
                 html += '💰 卖出 (' + sellPrice + '金币)';
                 html += '</button>';
@@ -340,6 +347,23 @@
                             if (typeof window.updateStatusBar === 'function') {
                                 window.updateStatusBar();
                             }
+                        }
+                    }
+                };
+            }
+            
+            var upgradeBtn = document.querySelector('.btn-upgrade-card');
+            if (upgradeBtn) {
+                upgradeBtn.onclick = function () {
+                    var cardId = upgradeBtn.getAttribute('data-card-id');
+                    if (confirm('确定要消耗1张卡牌进行升级吗？')) {
+                        var success = GameState.upgradeCard(cardId);
+                        if (success) {
+                            showToast('升级成功！');
+                            hideModal();
+                            renderCollection();
+                        } else {
+                            showToast('升级失败', 'error');
                         }
                     }
                 };
