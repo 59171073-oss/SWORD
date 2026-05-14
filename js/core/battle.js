@@ -98,7 +98,8 @@ var BattleEngine = {
             units: [],
             actionOrder: [],
             ended: false,
-            winner: null
+            winner: null,
+            unitStats: {}
         };
         this._onAction = onAction;
         this._onEnd = onEnd;
@@ -120,8 +121,9 @@ var BattleEngine = {
                 if (!stats) return;
 
                 uid++;
+                var unitId = 'p' + uid;
                 var unit = {
-                    id: 'p' + uid,
+                    id: unitId,
                     heroId: heroId,
                     name: stats.name,
                     side: 'player',
@@ -140,6 +142,7 @@ var BattleEngine = {
                     alive: true,
                     critChance: 0
                 };
+                self._state.unitStats[unitId] = { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
 
                 var cardData = CHARACTER_CARDS.find(function(c) { return c.id === heroId; });
                 if (cardData && cardData.innateSkill && cardData.innateSkill.passiveEffect) {
@@ -175,8 +178,9 @@ var BattleEngine = {
         var protStats = GameState.getProtagonistStats();
         if (protStats) {
             uid++;
+            var protUnitId = 'p_protagonist';
             var protUnit = {
-                id: 'p_protagonist',
+                id: protUnitId,
                 heroId: 'protagonist',
                 name: protStats.name,
                 side: 'player',
@@ -196,6 +200,7 @@ var BattleEngine = {
                 isProtagonist: true,
                 critChance: 0.15
             };
+            self._state.unitStats[protUnitId] = { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
 
             if (PROTAGONIST.innateSkill && PROTAGONIST.innateSkill.passiveEffect) {
                 if (PROTAGONIST.innateSkill.passiveEffect.type === 'crit_chance') {
@@ -229,8 +234,9 @@ var BattleEngine = {
         if (enemyTeam) {
             enemyTeam.forEach(function(enemy) {
                 uid++;
+                var enemyUnitId = 'e' + uid;
                 var unit = {
-                    id: 'e' + uid,
+                    id: enemyUnitId,
                     heroId: null,
                     name: enemy.name,
                     side: 'enemy',
@@ -249,6 +255,7 @@ var BattleEngine = {
                     alive: true,
                     critChance: 0
                 };
+                self._state.unitStats[enemyUnitId] = { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
                 self._state.units.push(unit);
             });
         }
@@ -427,6 +434,14 @@ var BattleEngine = {
                 var target = allies[0];
                 var actualHeal = Math.min(healAmount, target.maxHp - target.currentHp);
                 target.currentHp += actualHeal;
+                
+                if (self._state.unitStats[unit.id]) {
+                    self._state.unitStats[unit.id].healDone += actualHeal;
+                }
+                if (self._state.unitStats[target.id]) {
+                    self._state.unitStats[target.id].healReceived += actualHeal;
+                }
+                
                 actionInfo.type = 'heal';
                 actionInfo.heal = actualHeal;
                 actionInfo.target = { id: target.id, name: target.name, side: target.side };
@@ -461,6 +476,14 @@ var BattleEngine = {
                     self._applyDamageToUnit(target, dmgResult.damage);
                     totalDamageDealt += dmgResult.damage;
                     actionInfo.damage += dmgResult.damage;
+                    
+                    if (self._state.unitStats[unit.id]) {
+                        self._state.unitStats[unit.id].damageDealt += dmgResult.damage;
+                    }
+                    if (self._state.unitStats[target.id]) {
+                        self._state.unitStats[target.id].damageTaken += dmgResult.damage;
+                    }
+                    
                     actionInfo.results.push({
                         target: { id: target.id, name: target.name, side: target.side },
                         damage: dmgResult.damage,
@@ -484,6 +507,14 @@ var BattleEngine = {
                     var actualHeal = Math.min(healAmount, target.maxHp - target.currentHp);
                     target.currentHp += actualHeal;
                     actionInfo.heal += actualHeal;
+                    
+                    if (self._state.unitStats[unit.id]) {
+                        self._state.unitStats[unit.id].healDone += actualHeal;
+                    }
+                    if (self._state.unitStats[target.id]) {
+                        self._state.unitStats[target.id].healReceived += actualHeal;
+                    }
+                    
                     actionInfo.results.push({
                         target: { id: target.id, name: target.name, side: target.side },
                         heal: actualHeal
@@ -528,6 +559,14 @@ var BattleEngine = {
                     var dmgResult = this._calculateDamage(unit, target, 1.0);
                     this._applyDamageToUnit(target, dmgResult.damage);
                     totalDamageDealt = dmgResult.damage;
+                    
+                    if (self._state.unitStats[unit.id]) {
+                        self._state.unitStats[unit.id].damageDealt += dmgResult.damage;
+                    }
+                    if (self._state.unitStats[target.id]) {
+                        self._state.unitStats[target.id].damageTaken += dmgResult.damage;
+                    }
+                    
                     actionInfo.target = { id: target.id, name: target.name, side: target.side };
                     actionInfo.damage = dmgResult.damage;
                     actionInfo.elementModifier = dmgResult.elementModifier;
@@ -724,8 +763,16 @@ var BattleEngine = {
 
         for (var i = 0; i < this._state.units.length; i++) {
             var u = this._state.units[i];
+            var stats = this._state.unitStats[u.id] || { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
+            var unitWithStats = {
+                ...u,
+                damageDealt: stats.damageDealt,
+                damageTaken: stats.damageTaken,
+                healDone: stats.healDone,
+                healReceived: stats.healReceived
+            };
             if (u.side === 'player') {
-                playerUnits.push(u);
+                playerUnits.push(unitWithStats);
                 if (u.alive) playerSurvivors++;
             } else {
                 if (u.alive) enemySurvivors++;

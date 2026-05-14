@@ -304,7 +304,7 @@
 
             html += '<div class="player-stats-section" style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(212,160,23,0.2);">';
             html += '<div style="font-size:13px;color:var(--gold);margin-bottom:8px;text-align:center;">📊 我方战斗数据</div>';
-            html += '<div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding-right:4px;">';
+            html += '<div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding-right:4px;">';
 
             var playerUnits = result.playerUnits || [];
             playerUnits.forEach(function(unit) {
@@ -318,11 +318,19 @@
                 html += '<span style="font-size:12px;">' + (classData ? classData.icon : '?') + ' ' + unit.name + '</span>';
                 html += '<span style="color:' + hpColor + ';">' + statusIcon + ' ' + hpPct + '%</span>';
                 html += '</div>';
-                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-                html += '<div style="display:flex;gap:6px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">';
                 html += '<span style="color:var(--vermilion);">❤️ ' + Math.max(0, Math.floor(unit.currentHp)) + '/' + unit.maxHp + '</span>';
+                html += '<span style="font-size:10px;color:var(--cyan-gray);">Lv.' + (unit.level || 1) + '</span>';
                 html += '</div>';
-                html += '<div style="font-size:10px;color:var(--cyan-gray);">Lv.' + (unit.level || 1) + '</div>';
+                html += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;">';
+                if (unit.damageDealt > 0) {
+                    html += '<span style="color:var(--azure);">⚔ 伤害 ' + unit.damageDealt + '</span>';
+                } else {
+                    html += '<span style="color:rgba(52,152,219,0.5);">⚔ 伤害 0</span>';
+                }
+                if (unit.healDone > 0) {
+                    html += '<span style="color:var(--jade);">💚 治疗 ' + unit.healDone + '</span>';
+                }
                 html += '</div>';
                 html += '</div>';
             });
@@ -367,7 +375,7 @@
 
             html += '<div class="player-stats-section" style="margin-bottom:12px;">';
             html += '<div style="font-size:13px;color:var(--gold);margin-bottom:8px;text-align:center;">📊 我方战斗数据</div>';
-            html += '<div style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;padding-right:4px;">';
+            html += '<div style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;padding-right:4px;">';
 
             var playerUnitsLoss = result.playerUnits || [];
             playerUnitsLoss.forEach(function(unit) {
@@ -381,11 +389,19 @@
                 html += '<span style="font-size:12px;">' + (classData ? classData.icon : '?') + ' ' + unit.name + '</span>';
                 html += '<span style="color:' + hpColor + ';">' + statusIcon + ' ' + hpPct + '%</span>';
                 html += '</div>';
-                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-                html += '<div style="display:flex;gap:6px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">';
                 html += '<span style="color:var(--vermilion);">❤️ ' + Math.max(0, Math.floor(unit.currentHp)) + '/' + unit.maxHp + '</span>';
+                html += '<span style="font-size:10px;color:var(--cyan-gray);">Lv.' + (unit.level || 1) + '</span>';
                 html += '</div>';
-                html += '<div style="font-size:10px;color:var(--cyan-gray);">Lv.' + (unit.level || 1) + '</div>';
+                html += '<div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;">';
+                if (unit.damageDealt > 0) {
+                    html += '<span style="color:var(--azure);">⚔ 伤害 ' + unit.damageDealt + '</span>';
+                } else {
+                    html += '<span style="color:rgba(52,152,219,0.5);">⚔ 伤害 0</span>';
+                }
+                if (unit.healDone > 0) {
+                    html += '<span style="color:var(--jade);">💚 治疗 ' + unit.healDone + '</span>';
+                }
                 html += '</div>';
                 html += '</div>';
             });

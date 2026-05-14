@@ -497,8 +497,8 @@
         }
 
         var formation = GameState.getFormation();
-        if (!formation.equips[heroInstanceId]) formation.equips[heroInstanceId] = { weapon: null, armor: null, accessory: null, secret: null };
-        if (!formation.skills[heroInstanceId]) formation.skills[heroInstanceId] = { active: null, passive: null };
+        if (!formation.equips[heroInstanceId]) formation.equips[heroInstanceId] = { weapon: null, armor: null, accessory1: null, accessory2: null };
+        if (!formation.skills[heroInstanceId]) formation.skills[heroInstanceId] = { skill1: null, skill2: null, skill3: null, skill4: null };
 
         var heroEquips = formation.equips[heroInstanceId];
         var heroSkills = formation.skills[heroInstanceId];
