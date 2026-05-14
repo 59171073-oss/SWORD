@@ -102,9 +102,16 @@ const GameState = {
 
     addCard(cardId, type, rarity) {
         const existing = this.state.collection[cardId];
+        var maxLevel;
+        if (type === 'hero') {
+            maxLevel = 20;
+        } else if (type === 'skill') {
+            maxLevel = 10;
+        } else {
+            maxLevel = 5;
+        }
         if (existing && existing.rarity === rarity) {
             existing.count += 1;
-            const maxLevel = type === 'hero' ? 10 : 5;
             if (existing.level < maxLevel) {
                 existing.level += 1;
             }
@@ -393,6 +400,75 @@ const GameState = {
         for (const slot in p.skills) {
             if (p.skills[slot] === skillId) return true;
         }
+        return false;
+    },
+
+    sellCard(cardId) {
+        const entry = this.state.collection[cardId];
+        if (!entry || entry.count <= 0) return 0;
+
+        const rarityData = RARITY[entry.rarity];
+        let basePrice = 50;
+        if (entry.rarity === 'FINE') basePrice = 100;
+        if (entry.rarity === 'RARE') basePrice = 200;
+        if (entry.rarity === 'LEGEND') basePrice = 500;
+
+        const levelBonus = Math.floor(basePrice * (entry.level - 1) * 0.1);
+        const totalPrice = basePrice + levelBonus;
+
+        entry.count -= 1;
+        if (entry.count <= 0) {
+            delete this.state.collection[cardId];
+        }
+
+        this.addGold(totalPrice);
+        return totalPrice;
+    },
+
+    getCardSellPrice(cardId) {
+        const entry = this.state.collection[cardId];
+        if (!entry) return 0;
+
+        let basePrice = 50;
+        if (entry.rarity === 'FINE') basePrice = 100;
+        if (entry.rarity === 'RARE') basePrice = 200;
+        if (entry.rarity === 'LEGEND') basePrice = 500;
+
+        const levelBonus = Math.floor(basePrice * (entry.level - 1) * 0.1);
+        return basePrice + levelBonus;
+    },
+
+    isCardEquipped(cardId) {
+        const p = this.state.protagonist;
+        if (p.equips) {
+            for (const slot in p.equips) {
+                if (p.equips[slot] === cardId) return true;
+            }
+        }
+        if (p.skills) {
+            for (const slot in p.skills) {
+                if (p.skills[slot] === cardId) return true;
+            }
+        }
+
+        const formation = this.state.formation;
+        if (formation.equips) {
+            for (const heroId in formation.equips) {
+                const heroEquips = formation.equips[heroId];
+                for (const slot in heroEquips) {
+                    if (heroEquips[slot] === cardId) return true;
+                }
+            }
+        }
+        if (formation.skills) {
+            for (const heroId in formation.skills) {
+                const heroSkills = formation.skills[heroId];
+                for (const slot in heroSkills) {
+                    if (heroSkills[slot] === cardId) return true;
+                }
+            }
+        }
+
         return false;
     }
 };

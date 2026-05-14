@@ -271,7 +271,14 @@
             html += '</div>';
         }
 
-        var maxLevel = entry.type === 'hero' ? 10 : 5;
+        var maxLevel;
+        if (entry.type === 'hero') {
+            maxLevel = 20;
+        } else if (entry.type === 'skill') {
+            maxLevel = 10;
+        } else {
+            maxLevel = 5;
+        }
         var isMaxLevel = entry.level >= maxLevel;
 
         html += '<div class="detail-upgrade">';
@@ -286,9 +293,46 @@
         }
         html += '</div>';
 
+        if (entry.type !== 'task') {
+            var sellPrice = GameState.getCardSellPrice(cardId);
+            var isEquipped = GameState.isCardEquipped(cardId);
+            html += '<div class="detail-actions" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(212,160,23,0.2);">';
+            if (isEquipped) {
+                html += '<div style="font-size:11px;color:var(--vermilion);margin-bottom:8px;">该卡牌已装备，请先卸下后再出售</div>';
+            } else {
+                html += '<button class="btn-ancient btn-sell-card" data-card-id="' + cardId + '" style="background:linear-gradient(180deg,#8b1a1a,#5c1010);">';
+                html += '💰 卖出 (' + sellPrice + '金币)';
+                html += '</button>';
+                if (entry.count > 1) {
+                    html += '<div style="font-size:10px;color:var(--cyan-gray);margin-top:4px;">拥有 ' + entry.count + ' 张</div>';
+                }
+            }
+            html += '</div>';
+        }
+
         html += '</div>';
 
         showModal(cardDef.name, html);
+
+        setTimeout(function () {
+            var sellBtn = document.querySelector('.btn-sell-card');
+            if (sellBtn) {
+                sellBtn.onclick = function () {
+                    var cardId = sellBtn.getAttribute('data-card-id');
+                    if (confirm('确定要卖出这张卡牌吗？')) {
+                        var price = GameState.sellCard(cardId);
+                        if (price > 0) {
+                            showToast('卖出成功，获得 ' + price + ' 金币');
+                            hideModal();
+                            renderCollection();
+                            if (typeof window.updateStatusBar === 'function') {
+                                window.updateStatusBar();
+                            }
+                        }
+                    }
+                };
+            }
+        }, 50);
     }
 
     function buildDetailStat(label, value) {
@@ -322,7 +366,14 @@
 
     function buildUpgradePreview(entry, cardDef) {
         var nextLevel = entry.level + 1;
-        var maxLevel = entry.type === 'hero' ? 10 : 5;
+        var maxLevel;
+        if (entry.type === 'hero') {
+            maxLevel = 20;
+        } else if (entry.type === 'skill') {
+            maxLevel = 10;
+        } else {
+            maxLevel = 5;
+        }
         if (nextLevel > maxLevel) return '';
 
         if (entry.type === 'hero') {

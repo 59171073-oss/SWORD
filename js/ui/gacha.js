@@ -4,14 +4,16 @@
 
     var RARITY_ORDER = { COMMON: 0, FINE: 1, RARE: 2, LEGEND: 3 };
     var RARITY_NAMES = { COMMON: '普通', FINE: '精良', RARE: '稀有', LEGEND: '传说' };
-    var TYPE_ICONS = { hero: '🗡️', equip: '🛡️', skill: '📖' };
-    var TYPE_NAMES = { hero: '人物', equip: '装备', skill: '技能' };
+    var TYPE_ICONS = { hero: '🗡️', weapon: '⚔️', armor: '🛡️', accessory: '💍', skill: '📖' };
+    var TYPE_NAMES = { hero: '人物', weapon: '武器', armor: '护甲', accessory: '饰品', skill: '秘籍' };
 
     var _gachaAnimating = false;
 
     function getCardPool(type, rarity) {
         if (type === 'hero') return CHARACTER_CARDS.filter(function (c) { return c.rarity === rarity; });
-        if (type === 'equip') return EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity; });
+        if (type === 'weapon') return EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity && c.type === 'weapon'; });
+        if (type === 'armor') return EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity && c.type === 'armor'; });
+        if (type === 'accessory') return EQUIPMENT_CARDS.filter(function (c) { return c.rarity === rarity && c.type === 'accessory'; });
         if (type === 'skill') return SKILL_CARDS.filter(function (c) { return c.rarity === rarity; });
         return [];
     }
@@ -28,9 +30,16 @@
     function pickType() {
         var r = Math.random();
         var probs = GACHA_CONFIG.typeProbability;
-        if (r < probs.skill) return 'skill';
-        if (r < probs.skill + probs.equipment) return 'equip';
-        return 'hero';
+        var cumulative = 0;
+        cumulative += probs.hero;
+        if (r < cumulative) return 'hero';
+        cumulative += probs.skill;
+        if (r < cumulative) return 'skill';
+        cumulative += probs.accessory;
+        if (r < cumulative) return 'accessory';
+        cumulative += probs.armor;
+        if (r < cumulative) return 'armor';
+        return 'weapon';
     }
 
     function gachaRoll(count) {
@@ -49,9 +58,27 @@
                     }
                 }
             }
+            if (pool.length === 0) {
+                var typeOrder = ['weapon', 'armor', 'accessory', 'skill', 'hero'];
+                for (var t = 0; t < typeOrder.length; t++) {
+                    for (var ri = 0; ri < fallbackOrder.length; ri++) {
+                        pool = getCardPool(typeOrder[t], fallbackOrder[ri]);
+                        if (pool.length > 0) {
+                            type = typeOrder[t];
+                            rarity = fallbackOrder[ri];
+                            break;
+                        }
+                    }
+                    if (pool.length > 0) break;
+                }
+            }
             if (pool.length === 0) continue;
             var card = pool[Math.floor(Math.random() * pool.length)];
-            results.push({ cardId: card.id, type: type, rarity: rarity });
+            var resultType = type;
+            if (type === 'weapon' || type === 'armor' || type === 'accessory') {
+                resultType = 'equip';
+            }
+            results.push({ cardId: card.id, type: resultType, originalType: type, rarity: rarity });
         }
         return results;
     }
@@ -82,10 +109,10 @@
             var allCommon = results.every(function (r) { return r.rarity === 'COMMON'; });
             if (allCommon && results.length > 0) {
                 var last = results[results.length - 1];
-                var finePool = getCardPool(last.type, 'FINE');
+                var finePool = getCardPool(last.originalType || last.type, 'FINE');
                 if (finePool.length > 0) {
                     var replacement = finePool[Math.floor(Math.random() * finePool.length)];
-                    results[results.length - 1] = { cardId: replacement.id, type: last.type, rarity: 'FINE' };
+                    results[results.length - 1] = { cardId: replacement.id, type: last.type, originalType: last.originalType, rarity: 'FINE' };
                 }
             }
         }
@@ -161,9 +188,11 @@
         body.innerHTML =
             '<div class="rates-section">' +
                 '<div class="rates-section-title">卡牌类型</div>' +
-                '<div class="rates-row"><span>人物</span><span>' + (typeProbs.character * 100) + '%</span></div>' +
-                '<div class="rates-row"><span>装备</span><span>' + (typeProbs.equipment * 100) + '%</span></div>' +
-                '<div class="rates-row"><span>技能</span><span>' + (typeProbs.skill * 100) + '%</span></div>' +
+                '<div class="rates-row"><span>⚔️ 武器</span><span>' + (typeProbs.weapon * 100) + '%</span></div>' +
+                '<div class="rates-row"><span>🛡️ 护甲</span><span>' + (typeProbs.armor * 100) + '%</span></div>' +
+                '<div class="rates-row"><span>💍 饰品</span><span>' + (typeProbs.accessory * 100) + '%</span></div>' +
+                '<div class="rates-row"><span>📖 秘籍</span><span>' + (typeProbs.skill * 100) + '%</span></div>' +
+                '<div class="rates-row"><span>🗡️ 角色</span><span>' + (typeProbs.hero * 100) + '%</span></div>' +
             '</div>' +
             '<div class="rates-section">' +
                 '<div class="rates-section-title">稀有度</div>' +
@@ -226,7 +255,7 @@
             if (isNew) front.classList.add('new-card');
             if (isUpgrade) front.classList.add('upgraded');
 
-            var icon = TYPE_ICONS[result.type] || '🎴';
+            var icon = TYPE_ICONS[result.originalType] || TYPE_ICONS[result.type] || '🎴';
             var rarityClass = 'rarity-' + result.rarity.toLowerCase();
 
             front.innerHTML =
@@ -315,4 +344,5 @@
     window.doGacha = doGacha;
     window.gachaRoll = gachaRoll;
     window.showGachaResult = showGachaResult;
+    window.renderGachaPage = renderGacha;
 })();

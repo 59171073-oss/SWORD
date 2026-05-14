@@ -2310,3 +2310,360 @@ html, body {
     opacity: 0.4;
     text-align: center;
 }
+
+.heroes-filters {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-ancient);
+}
+
+.heroes-list {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.heroes-section {
+    margin-bottom: 16px;
+}
+
+.heroes-section .section-title {
+    font-size: 14px;
+    color: var(--gold);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(212,160,23,0.2);
+}
+
+.heroes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.hero-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-ancient);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    transition: all 0.2s;
+}
+
+.hero-card:hover {
+    border-color: var(--gold);
+    box-shadow: 0 2px 8px rgba(212,160,23,0.15);
+}
+
+.hero-card.rarity-fine {
+    border-color: var(--rarity-fine);
+}
+
+.hero-card.rarity-rare {
+    border-color: var(--rarity-rare);
+}
+
+.hero-card.rarity-legend {
+    border-color: var(--rarity-legend);
+    box-shadow: 0 0 8px rgba(155,89,182,0.3);
+}
+
+.hero-card.protagonist-card {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(212,160,23,0.05) 0%, transparent 100%);
+}
+
+.hero-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.hero-badge {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--parchment);
+}
+
+.hero-level {
+    font-size: 12px;
+    color: var(--gold);
+}
+
+.hero-status {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin: 0 8px;
+}
+
+.hero-status.in-formation {
+    background: var(--jade);
+    color: #fff;
+}
+
+.hero-info {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.hero-rarity {
+    font-size: 11px;
+    color: var(--cyan-gray);
+}
+
+.hero-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-sm);
+}
+
+.hero-stats .stat-item {
+    font-size: 12px;
+}
+
+.hero-equips {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.equip-mini-slot {
+    padding: 6px;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.equip-mini-slot.filled {
+    border-color: var(--jade);
+    background: rgba(39,174,96,0.1);
+}
+
+.equip-mini-slot .equip-icon {
+    font-size: 14px;
+    display: block;
+}
+
+.equip-mini-slot .equip-icon.empty {
+    opacity: 0.4;
+}
+
+.equip-mini-slot .equip-name {
+    font-size: 9px;
+    color: var(--parchment);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.equip-mini-slot .equip-name.empty {
+    color: var(--cyan-gray);
+    opacity: 0.6;
+}
+
+.hero-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.skill-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: rgba(52,152,219,0.2);
+    color: var(--azure);
+    border-radius: 10px;
+    border: 1px solid var(--azure);
+}
+
+.skill-badge.empty {
+    background: rgba(0,0,0,0.2);
+    color: var(--cyan-gray);
+    border-color: var(--border-ancient);
+    opacity: 0.6;
+}
+
+.hero-actions {
+    text-align: center;
+    padding-top: 8px;
+    border-top: 1px solid rgba(212,160,23,0.1);
+}
+
+.btn-sm {
+    font-size: 11px;
+    padding: 6px 16px;
+}
+
+.hero-detail-content {
+    padding: 12px;
+}
+
+.detail-header {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.in-formation-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: var(--jade);
+    color: #fff;
+    border-radius: 10px;
+}
+
+.detail-desc {
+    font-size: 12px;
+    color: var(--cyan-gray);
+    margin-bottom: 12px;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-sm);
+    line-height: 1.5;
+}
+
+.detail-section {
+    margin-bottom: 16px;
+}
+
+.detail-section h4 {
+    font-size: 13px;
+    color: var(--gold);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(212,160,23,0.2);
+}
+
+.detail-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.detail-stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-sm);
+}
+
+.detail-stat-item .stat-label {
+    font-size: 12px;
+    color: var(--cyan-gray);
+}
+
+.detail-stat-item .stat-value {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.detail-equips {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.detail-equip-slot {
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-ancient);
+}
+
+.detail-equip-slot.filled {
+    border-color: var(--jade);
+}
+
+.detail-equip-slot .slot-header {
+    font-size: 11px;
+    color: var(--cyan-gray);
+    margin-bottom: 4px;
+}
+
+.detail-equip-slot .slot-name {
+    font-size: 13px;
+    color: var(--parchment);
+    font-weight: bold;
+}
+
+.detail-equip-slot .slot-bonus {
+    font-size: 11px;
+    color: var(--jade);
+    margin-top: 2px;
+}
+
+.detail-equip-slot .slot-level {
+    font-size: 10px;
+    color: var(--gold);
+    margin-top: 2px;
+}
+
+.detail-equip-slot .slot-empty {
+    font-size: 11px;
+    color: var(--cyan-gray);
+    opacity: 0.6;
+}
+
+.detail-skills {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.detail-skill-slot {
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-ancient);
+}
+
+.detail-skill-slot.filled {
+    border-color: var(--azure);
+}
+
+.detail-skill-slot .slot-header {
+    font-size: 11px;
+    color: var(--cyan-gray);
+    margin-bottom: 4px;
+}
+
+.detail-skill-slot .slot-name {
+    font-size: 13px;
+    color: var(--parchment);
+    font-weight: bold;
+}
+
+.detail-skill-slot .slot-effect {
+    font-size: 11px;
+    color: var(--azure);
+    margin-top: 2px;
+}
+
+.detail-skill-slot .slot-level {
+    font-size: 10px;
+    color: var(--gold);
+    margin-top: 2px;
+}
+
+.detail-actions {
+    text-align: center;
+    padding-top: 12px;
+    border-top: 1px solid rgba(212,160,23,0.2);
+}
