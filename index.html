@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>江湖风云录</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <header id="status-bar">
+            <div class="status-left">
+                <span class="status-gold">💰 <span id="gold-display">0</span></span>
+            </div>
+            <div class="status-center">
+                <span class="game-title">江湖风云录</span>
+            </div>
+            <div class="status-right">
+                <span class="status-stage">第<span id="chapter-display">1</span>章 · 第<span id="stage-display">1</span>关</span>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <div id="page-city" class="page active">
+                <div class="city-hero">
+                    <div class="city-scene"></div>
+                    <h2 class="city-title">江湖风云录</h2>
+                    <p class="city-subtitle">仗剑江湖，快意恩仇</p>
+                </div>
+                <div class="city-info">
+                    <div class="info-card">
+                        <div class="info-label">少侠等级</div>
+                        <div class="info-value" id="player-level">1</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">卡牌数量</div>
+                        <div class="info-value" id="card-count">0</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">队伍战力</div>
+                        <div class="info-value" id="team-power">0</div>
+                    </div>
+                </div>
+                <div class="city-actions">
+                    <button class="btn-ancient btn-gacha" data-nav="gacha">酒馆抽卡</button>
+                    <button class="btn-ancient btn-formation" data-nav="formation">排兵布阵</button>
+                    <button class="btn-ancient btn-stages" data-nav="stages">闯荡江湖</button>
+                    <button class="btn-ancient btn-collection" data-nav="collection">卡牌图鉴</button>
+                </div>
+                <div class="city-daily">
+                    <h3>每日悬赏</h3>
+                    <div id="daily-quests"></div>
+                </div>
+            </div>
+
+            <div id="page-protagonist" class="page">
+                <h2 class="page-title">少侠</h2>
+                <div class="protagonist-card" id="protagonist-card">
+                    <div class="protagonist-portrait">
+                        <div class="portrait-frame">⚔️</div>
+                        <div class="protagonist-name" id="protagonist-name">少侠</div>
+                        <div class="protagonist-level" id="protagonist-level">Lv.1</div>
+                    </div>
+                    <div class="protagonist-stats" id="protagonist-stats"></div>
+                </div>
+                <div class="protagonist-equip-section">
+                    <h3>装备栏</h3>
+                    <div class="protagonist-equip-slots" id="protagonist-equip-slots"></div>
+                </div>
+                <div class="protagonist-skill-section">
+                    <h3>武林秘籍</h3>
+                    <div class="protagonist-skill-slots" id="protagonist-skill-slots"></div>
+                </div>
+                <div class="protagonist-actions" style="text-align:center;margin-top:16px;">
+                    <button class="btn-ancient" data-nav="formation" style="margin:0 8px;">排兵布阵</button>
+                    <button class="btn-ancient" data-nav="stages" style="margin:0 8px;">闯荡江湖</button>
+                </div>
+            </div>
+
+            <div id="page-formation" class="page">
+                <h2 class="page-title">排兵布阵</h2>
+                <div class="formation-overview">
+                    <div class="formation-power">
+                        <span>队伍战力：</span><span id="formation-power">0</span>
+                    </div>
+                    <div class="formation-elements" id="formation-elements"></div>
+                </div>
+                <div class="formation-slots" id="formation-slots">
+                    <div class="formation-slot" data-slot="0">
+                        <div class="slot-label">先锋</div>
+                        <div class="slot-card"></div>
+                    </div>
+                    <div class="formation-slot" data-slot="1">
+                        <div class="slot-label">左翼</div>
+                        <div class="slot-card"></div>
+                    </div>
+                    <div class="formation-slot" data-slot="2">
+                        <div class="slot-label">中军</div>
+                        <div class="slot-card"></div>
+                    </div>
+                    <div class="formation-slot" data-slot="3">
+                        <div class="slot-label">右翼</div>
+                        <div class="slot-card"></div>
+                    </div>
+                    <div class="formation-slot" data-slot="4">
+                        <div class="slot-label">殿后</div>
+                        <div class="slot-card"></div>
+                    </div>
+                </div>
+                <div class="formation-equip" id="formation-equip" style="display:none;">
+                    <h3>装备配置</h3>
+                    <div class="equip-slots">
+                        <div class="equip-slot" data-equip="weapon">
+                            <div class="equip-label">⚔️ 武器</div>
+                            <div class="equip-card"></div>
+                        </div>
+                        <div class="equip-slot" data-equip="armor">
+                            <div class="equip-label">🛡️ 护甲</div>
+                            <div class="equip-card"></div>
+                        </div>
+                        <div class="equip-slot" data-equip="accessory1">
+                            <div class="equip-label">💍 饰品一</div>
+                            <div class="equip-card"></div>
+                        </div>
+                        <div class="equip-slot" data-equip="accessory2">
+                            <div class="equip-label">💍 饰品二</div>
+                            <div class="equip-card"></div>
+                        </div>
+                    </div>
+                    <div class="skill-slots">
+                        <div class="skill-slot" data-skill="skill1">
+                            <div class="skill-label">📖 秘籍一</div>
+                            <div class="skill-card"></div>
+                        </div>
+                        <div class="skill-slot" data-skill="skill2">
+                            <div class="skill-label">📖 秘籍二</div>
+                            <div class="skill-card"></div>
+                        </div>
+                        <div class="skill-slot" data-skill="skill3">
+                            <div class="skill-label">📖 秘籍三</div>
+                            <div class="skill-card"></div>
+                        </div>
+                        <div class="skill-slot" data-skill="skill4">
+                            <div class="skill-label">📖 秘籍四</div>
+                            <div class="skill-card"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="formation-roster" id="formation-roster"></div>
+                <div class="formation-actions">
+                    <button class="btn-ancient" id="btn-save-formation">保存编队</button>
+                </div>
+            </div>
+
+            <div id="page-stages" class="page">
+                <h2 class="page-title">闯荡江湖</h2>
+                <div class="chapter-list" id="chapter-list"></div>
+                <div class="stage-map" id="stage-map"></div>
+            </div>
+
+            <div id="page-gacha" class="page">
+                <h2 class="page-title">酒馆招募</h2>
+                <div class="gacha-scene">
+                    <div class="gacha-banner">
+                        <p class="gacha-banner-text">江湖豪杰，尽入麾下</p>
+                    </div>
+                </div>
+                <div class="gacha-info">
+                    <div class="gacha-rates">
+                        <span class="rate rate-common">普通 50%</span>
+                        <span class="rate rate-fine">精良 30%</span>
+                        <span class="rate rate-rare">稀有 15%</span>
+                        <span class="rate rate-legend">传说 5%</span>
+                    </div>
+                    <div class="gacha-gold">
+                        当前金币：<span id="gacha-gold">0</span>
+                    </div>
+                </div>
+                <div class="gacha-buttons">
+                    <button class="btn-ancient btn-gacha-single" id="btn-gacha-single">
+                        单次招募 (100金币)
+                    </button>
+                    <button class="btn-ancient btn-gacha-ten" id="btn-gacha-ten">
+                        十连招募 (900金币)
+                    </button>
+                </div>
+                <div class="gacha-results" id="gacha-results"></div>
+            </div>
+
+            <div id="page-collection" class="page">
+                <h2 class="page-title">卡牌图鉴</h2>
+                <div class="collection-filters">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="hero">人物</button>
+                    <button class="filter-btn" data-filter="equip">装备</button>
+                    <button class="filter-btn" data-filter="skill">技能</button>
+                    <button class="filter-btn" data-filter="quest">任务</button>
+                </div>
+                <div class="collection-sort">
+                    <select id="collection-sort">
+                        <option value="rarity-desc">稀有度 高→低</option>
+                        <option value="rarity-asc">稀有度 低→高</option>
+                        <option value="level-desc">等级 高→低</option>
+                        <option value="level-asc">等级 低→高</option>
+                        <option value="name">名称</option>
+                    </select>
+                </div>
+                <div class="collection-grid" id="collection-grid"></div>
+            </div>
+
+            <div id="page-battle" class="page">
+                <div class="battle-header">
+                    <button class="btn-back" id="btn-battle-back">撤退</button>
+                    <div class="battle-title" id="battle-title">战斗</div>
+                    <div class="battle-round">回合 <span id="battle-round">1</span></div>
+                </div>
+                <div class="battle-order" id="battle-order"></div>
+                <div class="battle-field">
+                    <div class="battle-side battle-enemy">
+                        <div class="side-label">敌方</div>
+                        <div class="battle-cards" id="battle-enemy-cards"></div>
+                    </div>
+                    <div class="battle-vs">VS</div>
+                    <div class="battle-side battle-player">
+                        <div class="side-label">我方</div>
+                        <div class="battle-cards" id="battle-player-cards"></div>
+                    </div>
+                </div>
+                <div class="battle-log" id="battle-log"></div>
+                <div class="battle-actions" id="battle-actions" style="display:none;">
+                    <button class="btn-ancient" id="btn-battle-speed">加速</button>
+                    <button class="btn-ancient" id="btn-battle-skip">跳过</button>
+                </div>
+            </div>
+        </main>
+
+        <nav id="nav-bar">
+            <button class="nav-btn active" data-page="city">
+                <span class="nav-icon">🏯</span>
+                <span class="nav-text">主城</span>
+            </button>
+            <button class="nav-btn" data-page="protagonist">
+                <span class="nav-icon">🧑‍⚔️</span>
+                <span class="nav-text">少侠</span>
+            </button>
+            <button class="nav-btn" data-page="stages">
+                <span class="nav-icon">🏔️</span>
+                <span class="nav-text">闯关</span>
+            </button>
+            <button class="nav-btn" data-page="gacha">
+                <span class="nav-icon">🎴</span>
+                <span class="nav-text">抽卡</span>
+            </button>
+            <button class="nav-btn" data-page="collection">
+                <span class="nav-icon">📜</span>
+                <span class="nav-text">卡包</span>
+            </button>
+        </nav>
+
+        <div id="modal-overlay" class="modal-overlay" style="display:none;">
+            <div class="modal-content" id="modal-content"></div>
+        </div>
+
+        <div id="float-text-container"></div>
+    </div>
+
+    <script src="js/data/elements.js"></script>
+    <script src="js/data/classes.js"></script>
+    <script src="js/data/cards.js"></script>
+    <script src="js/data/levels.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/battle.js"></script>
+    <script src="js/ui/collection.js"></script>
+    <script src="js/ui/gacha.js"></script>
+    <script src="js/ui/protagonist.js"></script>
+    <script src="js/ui/formation.js"></script>
+    <script src="js/ui/battle-ui.js"></script>
+    <script src="js/ui/stages.js"></script>
+    <script src="js/ui/main.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+const RARITY = {
+    COMMON: { id: 'COMMON', name: '普通', multiplier: 1.0, color: '#cccccc' },
+    FINE: { id: 'FINE', name: '精良', multiplier: 1.3, color: '#2ecc71' },
+    RARE: { id: 'RARE', name: '稀有', multiplier: 1.6, color: '#3498db' },
+    LEGEND: { id: 'LEGEND', name: '传说', multiplier: 2.0, color: '#9b59b6' }
+};
+
+const CHARACTER_CARDS = [
+    {
+        id: 'char_001',
+        name: '家丁',
+        classId: 'QUANSHI',
+        element: '土',
+        rarity: 'COMMON',
+        baseStats: { hp: 500, atk: 50, def: 40, spd: 60 },
+        description: '府中家丁，忠心耿耿，虽无绝世武功，却有一身蛮力。'
+    }
+];
+
+const EQUIPMENT_CARDS = [
+    {
+        id: 'equip_001',
+        name: '铁剑',
+        type: 'weapon',
+        rarity: 'COMMON',
+        bonus: { atk: 10 },
+        description: '寻常铁匠铺打造的铁剑，虽非名器，却也锋利。'
+    },
+    {
+        id: 'equip_002',
+        name: '布甲',
+        type: 'armor',
+        rarity: 'COMMON',
+        bonus: { def: 10 },
+        description: '厚实的棉布甲，能挡些轻微的刀剑。'
+    },
+    {
+        id: 'equip_003',
+        name: '铁戒指',
+        type: 'accessory',
+        rarity: 'COMMON',
+        bonus: { atk: 5, spd: 5 },
+        description: '铁质戒指，刻有简易纹路，佩戴后拳脚更为利落。'
+    },
+    {
+        id: 'equip_004',
+        name: '铜戒指',
+        type: 'accessory',
+        rarity: 'COMMON',
+        bonus: { def: 5, spd: 5 },
+        description: '铜质戒指，古朴厚重，佩戴后身法更为稳健。'
+    }
+];
+
+const SKILL_CARDS = [
+    {
+        id: 'skill_001',
+        name: '平沙剑法',
+        type: 'active_attack',
+        rarity: 'COMMON',
+        multiplier: 0.8,
+        effect: '对所有敌人造成自身攻击力80%的伤害',
+        description: '平沙落雁，剑气横扫。一剑挥出，如大漠风沙席卷四方。'
+    },
+    {
+        id: 'skill_002',
+        name: '吐纳心法',
+        type: 'passive_buff',
+        rarity: 'COMMON',
+        multiplier: 0,
+        effect: '速度+10，每回合回复50点生命',
+        description: '调息吐纳，以意领气。修习后身轻体健，伤势自愈。'
+    }
+];
+
+const TASK_CARDS = [
+    {
+        id: 'task_001',
+        name: '速战速决',
+        condition: '5回合内获胜',
+        conditionType: 'turns',
+        conditionValue: 5,
+        reward: { gold: 200 },
+        description: '兵贵神速，速战速决方为上策。'
+    },
+    {
+        id: 'task_002',
+        name: '完美通关',
+        condition: '无角色阵亡',
+        conditionType: 'no_death',
+        conditionValue: true,
+        reward: { gold: 300 },
+        description: '保全己方，方为将才。'
+    },
+    {
+        id: 'task_003',
+        name: '以弱胜强',
+        condition: '队伍总战力低于敌方',
+        conditionType: 'power_lower',
+        conditionValue: true,
+        reward: { gold: 500 },
+        description: '以弱胜强，方显英雄本色。'
+    },
+    {
+        id: 'task_004',
+        name: '五行齐全',
+        condition: '队伍包含5种五行属性',
+        conditionType: 'elements_count',
+        conditionValue: 5,
+        reward: { cardRarity: 'RARE' },
+        description: '五行齐聚，天地归一。'
+    },
+    {
+        id: 'task_005',
+        name: '全员存活',
+        condition: '所有角色HP大于50%',
+        conditionType: 'hp_above',
+        conditionValue: 0.5,
+        reward: { gold: 250 },
+        description: '保全战力，稳扎稳打。'
+    }
+];
+
+const GACHA_CONFIG = {
+    typeProbability: {
+        character: 0.30,
+        equipment: 0.40,
+        skill: 0.30
+    },
+    rarityProbability: {
+        COMMON: 0.60,
+        FINE: 0.25,
+        RARE: 0.12,
+        LEGEND: 0.03
+    }
+};
+
+const PROTAGONIST = {
+    id: 'protagonist',
+    name: '少侠',
+    gender: 'male',
+    element: '金',
+    baseStats: { hp: 1000, atk: 100, def: 80, spd: 90 },
+    description: '初入江湖的少年侠客，前途无量。'
+};
