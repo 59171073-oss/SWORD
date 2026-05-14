@@ -164,7 +164,7 @@ const GameState = {
             statsWithLevel[stat] = Math.floor(baseStats[stat] * (1 + (heroEntry.level - 1) * 0.15));
         }
 
-        const equipBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const equipBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         const formation = formationContext || this.state.formation;
         if (formation.equips && formation.equips[heroInstanceId]) {
             const heroEquips = formation.equips[heroInstanceId];
@@ -185,7 +185,7 @@ const GameState = {
             }
         }
 
-        const synergyBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const synergyBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         if (formation.slots) {
             const teamElements = formation.slots
                 .filter(id => id !== null)
@@ -299,14 +299,14 @@ const GameState = {
             if (heroId) {
                 const stats = this.getHeroStats(heroId, formation);
                 if (stats) {
-                    totalPower += stats.hp + stats.atk + stats.def + stats.spd;
+                    totalPower += stats.hp + stats.atk + stats.def + stats.agi;
                 }
             }
         });
 
         const protStats = this.getProtagonistStats();
         if (protStats) {
-            totalPower += protStats.hp + protStats.atk + protStats.def + protStats.spd;
+            totalPower += protStats.hp + protStats.atk + protStats.def + protStats.agi;
         }
 
         return totalPower;
@@ -321,10 +321,10 @@ const GameState = {
             hp: Math.floor(base.hp * levelMultiplier),
             atk: Math.floor(base.atk * levelMultiplier),
             def: Math.floor(base.def * levelMultiplier),
-            spd: Math.floor(base.spd * levelMultiplier)
+            agi: Math.floor(base.agi * levelMultiplier)
         };
 
-        const equipBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const equipBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         if (p.equips) {
             for (const slot in p.equips) {
                 const equipId = p.equips[slot];
@@ -343,14 +343,19 @@ const GameState = {
             }
         }
 
-        const skillBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const skillBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         if (p.skills) {
             for (const slot in p.skills) {
                 const skillId = p.skills[slot];
                 if (skillId) {
                     const skillData = SKILL_CARDS.find(s => s.id === skillId);
-                    if (skillData && skillData.name === '吐纳心法') {
-                        skillBonus.spd += 10;
+                    if (skillData) {
+                        const effects = skillData.effects || [];
+                        effects.forEach(function(effect) {
+                            if (effect.type === 'stat_buff' && effect.stat === 'agi') {
+                                skillBonus.agi += effect.value;
+                            }
+                        });
                     }
                 }
             }

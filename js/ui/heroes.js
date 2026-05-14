@@ -1,8 +1,8 @@
 (function () {
 
-    var STAT_LABELS = { hp: '生命', atk: '攻击', def: '防御', spd: '速度' };
-    var STAT_COLORS = { hp: '#e74c3c', atk: '#e67e22', def: '#3498db', spd: '#2ecc71' };
-    var STAT_ICONS = { hp: '❤️', atk: '⚔️', def: '🛡️', spd: '💨' };
+    var STAT_LABELS = { hp: '生命', atk: '攻击', def: '防御', agi: '身法' };
+    var STAT_COLORS = { hp: '#e74c3c', atk: '#e67e22', def: '#3498db', agi: '#2ecc71' };
+    var STAT_ICONS = { hp: '❤️', atk: '⚔️', def: '🛡️', agi: '💨' };
 
     var EQUIP_SLOT_CONFIG = [
         { key: 'weapon', label: '武器', icon: '⚔️' },

@@ -12,9 +12,14 @@ const CHARACTER_CARDS = [
         classId: 'QUANSHI',
         element: '土',
         rarity: 'COMMON',
-        baseStats: { hp: 500, atk: 50, def: 40, spd: 60 },
+        baseStats: { hp: 500, atk: 50, def: 40, agi: 60 },
         description: '府中家丁，忠心耿耿，虽无绝世武功，却有一身蛮力。',
-        imageUrl: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=young%20chinese%20male%20servant%20in%20blue%20traditional%20clothes%2C%20holding%20broom%2C%20wuxia%20style%2C%20portrait%2C%20honest%20face&image_size=square_hd'
+        imageUrl: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=young%20chinese%20male%20servant%20in%20blue%20traditional%20clothes%2C%20holding%20broom%2C%20wuxia%20style%2C%20portrait%2C%20honest%20face&image_size=square_hd',
+        innateSkill: {
+            name: '忠心护主',
+            description: '为主人挡刀时，防御提升10%',
+            effect: { type: 'defense_boost', value: 0.1, condition: 'ally_near_death' }
+        }
     },
     {
         id: 'char_002',
@@ -22,11 +27,16 @@ const CHARACTER_CARDS = [
         classId: 'YIZHE',
         element: '木',
         rarity: 'FINE',
-        baseStats: { hp: 90, atk: 60, def: 60, spd: 80 },
+        baseStats: { hp: 90, atk: 60, def: 60, agi: 80 },
         description: '主角的侍女，从小跟随主角，温柔体贴，擅长医术。',
         imageUrl: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=beautiful%20chinese%20maiden%20in%20green%20traditional%20dress%2C%20holding%20teapot%2C%20wuxia%20style%2C%20portrait%2C%20gentle%20expression%2C%20bamboo%20garden&image_size=square_hd',
         isHealer: true,
-        healMultiplier: 0.3
+        healMultiplier: 0.3,
+        innateSkill: {
+            name: '侍奉照料',
+            description: '每回合开始时，为血量最低的友方回复15点生命',
+            effect: { type: 'turn_start_heal', value: 15, target: 'lowest_hp_ally' }
+        }
     }
 ];
 
@@ -52,7 +62,7 @@ const EQUIPMENT_CARDS = [
         name: '铁戒指',
         type: 'accessory',
         rarity: 'COMMON',
-        bonus: { atk: 5, spd: 5 },
+        bonus: { atk: 5, agi: 5 },
         description: '铁质戒指，刻有简易纹路，佩戴后拳脚更为利落。'
     },
     {
@@ -60,7 +70,7 @@ const EQUIPMENT_CARDS = [
         name: '铜戒指',
         type: 'accessory',
         rarity: 'COMMON',
-        bonus: { def: 5, spd: 5 },
+        bonus: { def: 5, agi: 5 },
         description: '铜质戒指，古朴厚重，佩戴后身法更为稳健。'
     }
 ];
@@ -85,11 +95,11 @@ const SKILL_CARDS = [
         type: 'passive_buff',
         rarity: 'COMMON',
         multiplier: 0,
-        effect: '速度+10，每回合回复50点生命',
+        effect: '身法+10，每回合回复50点生命',
         description: '调息吐纳，以意领气。修习后身轻体健，伤势自愈。',
         targeting: 'self',
         effects: [
-            { trigger: 'onBattleStart', type: 'stat_buff', target: 'self', stat: 'spd', value: 10 },
+            { trigger: 'onBattleStart', type: 'stat_buff', target: 'self', stat: 'agi', value: 10 },
             { trigger: 'onTurnEnd', type: 'heal', target: 'self', value: 50 }
         ]
     },
@@ -248,7 +258,13 @@ const PROTAGONIST = {
     name: '少侠',
     gender: 'male',
     element: '金',
-    baseStats: { hp: 1000, atk: 100, def: 80, spd: 90 },
+    baseStats: { hp: 1000, atk: 100, def: 80, agi: 90 },
     description: '初入江湖的少年侠客，前途无量。',
-    imageUrl: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=young%20chinese%20male%20warrior%20in%20black%20and%20red%20traditional%20armor%2C%20holding%20long%20sword%2C%20wuxia%20style%2C%20portrait%2C%20handsome%2C%20confident%2C%20sunset%20background&image_size=square_hd'
+    imageUrl: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=young%20chinese%20male%20warrior%20in%20black%20and%20red%20traditional%20armor%2C%20holding%20long%20sword%2C%20wuxia%20style%2C%20portrait%2C%20handsome%2C%20confident%2C%20sunset%20background&image_size=square_hd',
+    innateSkill: {
+        name: '江湖新秀',
+        description: '身法+10，攻击时有15%几率造成暴击',
+        effect: { type: 'stat_boost', stat: 'agi', value: 10 },
+        passiveEffect: { type: 'crit_chance', value: 0.15 }
+    }
 };
