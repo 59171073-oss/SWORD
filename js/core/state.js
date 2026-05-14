@@ -56,7 +56,7 @@ const GameState = {
 
     newGame() {
         this.state = {
-            gold: 1000,
+            gold: 2000,
             collection: {},
             formation: {
                 slots: [null, null, null, null, null],
