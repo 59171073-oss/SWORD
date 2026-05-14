@@ -123,9 +123,11 @@ const TASK_CARDS = [
 
 const GACHA_CONFIG = {
     typeProbability: {
-        character: 0.30,
-        equipment: 0.40,
-        skill: 0.30
+        weapon: 0.30,
+        armor: 0.30,
+        accessory: 0.20,
+        skill: 0.12,
+        hero: 0.08
     },
     rarityProbability: {
         COMMON: 0.60,
