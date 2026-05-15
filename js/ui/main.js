@@ -9,6 +9,7 @@
         stages: 'page-stages',
         gacha: 'page-gacha',
         collection: 'page-collection',
+        gallery: 'page-gallery',
         battle: 'page-battle'
     };
 
@@ -75,6 +76,9 @@
         }
         if (pageId === 'heroes' && typeof window.renderHeroes === 'function') {
             window.renderHeroes();
+        }
+        if (pageId === 'gallery' && typeof window.renderGalleryPage === 'function') {
+            window.renderGalleryPage();
         }
     };
 
