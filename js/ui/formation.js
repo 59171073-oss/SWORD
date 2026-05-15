@@ -60,18 +60,20 @@
 
                 var removeBtn = cardEl.querySelector('.remove-hero-btn');
                 if (removeBtn) {
-                    removeBtn.onclick = function (e) {
-                        e.stopPropagation();
-                        formation.slots[i] = null;
-                        GameState.setFormation(formation);
-                        if (formation.equips) delete formation.equips[heroId];
-                        if (formation.skills) delete formation.skills[heroId];
-                        renderFormationSlots();
-                        renderRoster();
-                        updateFormationPower();
-                        renderFormationElements();
-                        hideEquipPanel();
-                    };
+                    (function (slotIdx, hid) {
+                        removeBtn.onclick = function (e) {
+                            e.stopPropagation();
+                            formation.slots[slotIdx] = null;
+                            GameState.setFormation(formation);
+                            if (formation.equips) delete formation.equips[hid];
+                            if (formation.skills) delete formation.skills[hid];
+                            renderFormationSlots();
+                            renderRoster();
+                            updateFormationPower();
+                            renderFormationElements();
+                            hideEquipPanel();
+                        };
+                    })(i, heroId);
                 }
 
                 (function (hid) {
@@ -171,8 +173,7 @@
             return;
         }
 
-        var html = '<div class="modal-title">选择侠客</div><button class="modal-close" id="modal-close-btn">✕</button>';
-        html += '<div style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding:8px;">';
+        var html = '<div style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding:8px;">';
 
         for (var i = 0; i < available.length; i++) {
             var hero = available[i];
@@ -192,9 +193,6 @@
         window.showModal('选择侠客', html, null);
 
         setTimeout(function () {
-            var closeBtn = document.getElementById('modal-close-btn');
-            if (closeBtn) closeBtn.onclick = function () { window.hideModal(); };
-
             var items = document.querySelectorAll('.hero-select-item');
             for (var i = 0; i < items.length; i++) {
                 items[i].onclick = function () {
@@ -371,7 +369,7 @@
             }
         }
 
-        var html = '<div class="modal-title">选择装备</div><button class="modal-close" id="modal-close-btn">✕</button>';
+        var html = '';
 
         if (allEquips.length === 0) {
             html += '<div style="text-align:center;color:#8b9dab;padding:24px;">暂无可用装备</div>';
@@ -398,9 +396,6 @@
         window.showModal('选择装备', html, null);
 
         setTimeout(function () {
-            var closeBtn = document.getElementById('modal-close-btn');
-            if (closeBtn) closeBtn.onclick = function () { window.hideModal(); };
-
             var items = document.querySelectorAll('.equip-select-item');
             for (var i = 0; i < items.length; i++) {
                 items[i].onclick = function () {
@@ -424,7 +419,7 @@
             return !GameState.isCardEquipped(s.id);
         });
 
-        var html = '<div class="modal-title">选择秘籍</div><button class="modal-close" id="modal-close-btn">✕</button>';
+        var html = '';
 
         if (available.length === 0) {
             html += '<div style="text-align:center;color:#8b9dab;padding:24px;">暂无可用秘籍</div>';
@@ -447,9 +442,6 @@
         window.showModal('选择秘籍', html, null);
 
         setTimeout(function () {
-            var closeBtn = document.getElementById('modal-close-btn');
-            if (closeBtn) closeBtn.onclick = function () { window.hideModal(); };
-
             var items = document.querySelectorAll('.skill-select-item');
             for (var i = 0; i < items.length; i++) {
                 items[i].onclick = function () {

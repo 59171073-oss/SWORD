@@ -14,6 +14,46 @@ const GameState = {
                 };
                 this.save();
             }
+            if (!this.state.stageProgress) {
+                this.state.stageProgress = {
+                    currentChapter: 1,
+                    currentStage: 1,
+                    cleared: {}
+                };
+                this.save();
+            }
+            if (!this.state.stageProgress.cleared) {
+                this.state.stageProgress.cleared = {};
+                this.save();
+            }
+            if (!this.state.firstClearBonus) {
+                this.state.firstClearBonus = {};
+                this.save();
+            }
+            if (!this.state.formation) {
+                this.state.formation = {
+                    slots: [null, null, null, null, null],
+                    equips: {},
+                    skills: {}
+                };
+                this.save();
+            }
+            if (!this.state.formation.slots) {
+                this.state.formation.slots = [null, null, null, null, null];
+                this.save();
+            }
+            if (!this.state.formation.equips) {
+                this.state.formation.equips = {};
+                this.save();
+            }
+            if (!this.state.formation.skills) {
+                this.state.formation.skills = {};
+                this.save();
+            }
+            if (!this.state.collection) {
+                this.state.collection = {};
+                this.save();
+            }
             if (this.state.firstGachaUsed === undefined) {
                 this.state.firstGachaUsed = false;
                 this.save();
@@ -228,7 +268,10 @@ const GameState = {
         }
 
         return {
-            ...finalStats,
+            hp: finalStats.hp,
+            atk: finalStats.atk,
+            def: finalStats.def,
+            agi: finalStats.agi,
             element: cardData.element,
             classId: cardData.classId,
             rarity: heroEntry.rarity,
@@ -408,7 +451,10 @@ const GameState = {
         }
 
         return {
-            ...finalStats,
+            hp: finalStats.hp,
+            atk: finalStats.atk,
+            def: finalStats.def,
+            agi: finalStats.agi,
             element: PROTAGONIST.element,
             classId: 'JIANKE',
             name: PROTAGONIST.name,

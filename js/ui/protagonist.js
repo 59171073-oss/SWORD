@@ -185,20 +185,17 @@
             listHtml = '<div class="empty-state" style="padding:24px;">暂无可用' + slotLabel + '，前往酒馆抽卡获取</div>';
         }
 
-        var html =
-            '<div class="modal-title">选择' + slotLabel + '</div>' +
-            '<button class="modal-close" onclick="window._hideFormationModal()">✕</button>' +
-            listHtml;
+        var html = listHtml;
 
-        showModal(html);
+        window.showModal('选择' + slotLabel, html, null);
 
         setTimeout(function () {
             document.querySelectorAll('.equip-select-card').forEach(function (card) {
                 card.onclick = function () {
                     var equipId = card.getAttribute('data-equip-id');
                     GameState.equipProtagonistItem(slotType, equipId);
-                    hideModal();
-                    showToast('已装备到少侠');
+                    window.hideModal();
+                    window.showToast('已装备到少侠');
                     renderProtagonist();
                 };
             });
@@ -248,20 +245,17 @@
             listHtml = '<div class="empty-state" style="padding:24px;">暂无可用秘籍</div>';
         }
 
-        var html =
-            '<div class="modal-title">选择武林秘籍</div>' +
-            '<button class="modal-close" onclick="window._hideFormationModal()">✕</button>' +
-            listHtml;
+        var html = listHtml;
 
-        showModal(html);
+        window.showModal('选择武林秘籍', html, null);
 
         setTimeout(function () {
             document.querySelectorAll('.skill-select-card').forEach(function (card) {
                 card.onclick = function () {
                     var skillId = card.getAttribute('data-skill-id');
                     GameState.equipProtagonistSkill(slotType, skillId);
-                    hideModal();
-                    showToast('秘籍已装备到少侠');
+                    window.hideModal();
+                    window.showToast('秘籍已装备到少侠');
                     renderProtagonist();
                 };
             });
@@ -310,32 +304,6 @@
             if (p.skills[slot] === skillId) return true;
         }
         return false;
-    }
-
-    function showModal(html) {
-        var overlay = document.getElementById('modal-overlay');
-        var content = document.getElementById('modal-content');
-        content.innerHTML = html;
-        overlay.style.display = 'flex';
-        overlay.onclick = function (e) {
-            if (e.target === overlay) hideModal();
-        };
-    }
-
-    function hideModal() {
-        var overlay = document.getElementById('modal-overlay');
-        overlay.style.display = 'none';
-        document.getElementById('modal-content').innerHTML = '';
-    }
-
-    function showToast(msg) {
-        var existing = document.querySelector('.toast');
-        if (existing) existing.remove();
-        var toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = msg;
-        document.getElementById('app').appendChild(toast);
-        setTimeout(function () { if (toast.parentNode) toast.remove(); }, 2500);
     }
 
     window.renderProtagonist = renderProtagonist;
