@@ -71,7 +71,6 @@
                             renderRoster();
                             updateFormationPower();
                             renderFormationElements();
-                            hideEquipPanel();
                         };
                     })(i, heroId);
                 }
@@ -80,7 +79,7 @@
                     cardEl.onclick = function (e) {
                         if (e.target.tagName === 'BUTTON') return;
                         selectedHeroId = hid;
-                        renderEquipPanel(hid);
+                        showHeroEquipModal(hid);
                     };
                 })(heroId);
             } else {
@@ -195,42 +194,38 @@
         setTimeout(function () {
             var items = document.querySelectorAll('.hero-select-item');
             for (var i = 0; i < items.length; i++) {
-                items[i].onclick = function () {
-                    var heroId = this.getAttribute('data-hero-id');
-                    var formation = GameState.state.formation;
-                    formation.slots[slotIndex] = heroId;
-                    if (!formation.equips) formation.equips = {};
-                    if (!formation.equips[heroId]) formation.equips[heroId] = { weapon: null, armor: null, accessory1: null, accessory2: null };
-                    if (!formation.skills) formation.skills = {};
-                    if (!formation.skills[heroId]) formation.skills[heroId] = { skill1: null, skill2: null, skill3: null, skill4: null };
-                    GameState.setFormation(formation);
-                    window.hideModal();
-                    renderFormationSlots();
-                    renderRoster();
-                    updateFormationPower();
-                    renderFormationElements();
-                };
+                (function (item) {
+                    item.onclick = function () {
+                        var heroId = item.getAttribute('data-hero-id');
+                        var formation = GameState.state.formation;
+                        formation.slots[slotIndex] = heroId;
+                        if (!formation.equips) formation.equips = {};
+                        if (!formation.equips[heroId]) formation.equips[heroId] = { weapon: null, armor: null, accessory1: null, accessory2: null };
+                        if (!formation.skills) formation.skills = {};
+                        if (!formation.skills[heroId]) formation.skills[heroId] = { skill1: null, skill2: null, skill3: null, skill4: null };
+                        GameState.setFormation(formation);
+                        window.hideModal();
+                        renderFormationSlots();
+                        renderRoster();
+                        updateFormationPower();
+                        renderFormationElements();
+                    };
+                })(items[i]);
             }
-        }, 50);
+        }, 100);
     }
 
-    function renderEquipPanel(heroId) {
-        var equipSection = document.getElementById('formation-equip');
-        if (!equipSection) return;
-
-        equipSection.style.display = 'block';
-
+    function showHeroEquipModal(heroId) {
         var formation = GameState.state.formation;
-        if (!formation.equips[heroId]) {
-            formation.equips[heroId] = { weapon: null, armor: null, accessory1: null, accessory2: null };
-        }
-        if (!formation.skills[heroId]) {
-            formation.skills[heroId] = { skill1: null, skill2: null, skill3: null, skill4: null };
-        }
+        if (!formation.equips) formation.equips = {};
+        if (!formation.equips[heroId]) formation.equips[heroId] = { weapon: null, armor: null, accessory1: null, accessory2: null };
+        if (!formation.skills) formation.skills = {};
+        if (!formation.skills[heroId]) formation.skills[heroId] = { skill1: null, skill2: null, skill3: null, skill4: null };
 
         var heroEquips = formation.equips[heroId];
         var heroSkills = formation.skills[heroId];
         var cardData = CHARACTER_CARDS.find(function (c) { return c.id === heroId; });
+        var stats = GameState.getHeroStats(heroId, formation);
 
         var equipSlots = [
             { key: 'weapon', label: '⚔️ 武器', type: 'weapon' },
@@ -246,11 +241,21 @@
             { key: 'skill4', label: '📖 秘籍四' }
         ];
 
-        var html = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(212,160,23,0.2);">';
-        html += '<div style="font-size:16px;color:#d4a017;font-weight:bold;">' + (cardData ? cardData.name : heroId) + ' 的装备</div>';
-        html += '<button id="close-equip-panel" style="margin-left:auto;padding:4px 12px;font-size:11px;" class="btn-ancient">关闭</button>';
+        var html = '';
+
+        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(212,160,23,0.3);">';
+        if (cardData && cardData.imageUrl) {
+            html += '<img src="' + cardData.imageUrl + '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid #d4a017;" onerror="this.style.display=\'none\'">';
+        }
+        html += '<div>';
+        html += '<div style="font-size:16px;color:#d4a017;font-weight:bold;">' + (cardData ? cardData.name : heroId) + '</div>';
+        if (stats) {
+            html += '<div style="font-size:11px;color:#8b9dab;margin-top:4px;">❤' + stats.hp + ' ⚔' + stats.atk + ' 🛡' + stats.def + ' 💨' + stats.agi + '</div>';
+        }
+        html += '</div>';
         html += '</div>';
 
+        html += '<div style="color:#d4a017;font-size:13px;font-weight:bold;margin-bottom:8px;">装备栏</div>';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">';
         for (var i = 0; i < equipSlots.length; i++) {
             var slot = equipSlots[i];
@@ -258,7 +263,7 @@
             var equipData = equipId ? EQUIPMENT_CARDS.find(function (e) { return e.id === equipId; }) : null;
             var equipEntry = equipId ? GameState.state.collection[equipId] : null;
 
-            html += '<div class="equip-slot-item" data-hero-id="' + heroId + '" data-slot-key="' + slot.key + '" data-slot-type="equip" data-equip-type="' + slot.type + '" style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;cursor:pointer;border:1px solid ' + (equipData ? (RARITY[equipEntry.rarity] ? RARITY[equipEntry.rarity].color : '#8b9dab') : '#555') + ';">';
+            html += '<div class="hero-equip-slot" data-hero-id="' + heroId + '" data-slot-key="' + slot.key + '" data-slot-type="equip" data-equip-type="' + slot.type + '" style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;cursor:pointer;border:1px solid ' + (equipData ? (equipEntry && RARITY[equipEntry.rarity] ? RARITY[equipEntry.rarity].color : '#8b9dab') : '#555') + ';">';
             html += '<div style="font-size:11px;color:#8b9dab;margin-bottom:4px;">' + slot.label + '</div>';
             if (equipData && equipEntry) {
                 var bonusStr = Object.keys(equipData.bonus).map(function (k) {
@@ -275,6 +280,7 @@
         }
         html += '</div>';
 
+        html += '<div style="color:#9b59b6;font-size:13px;font-weight:bold;margin-bottom:8px;">武林秘籍</div>';
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
         for (var i = 0; i < skillSlots.length; i++) {
             var slot = skillSlots[i];
@@ -282,7 +288,7 @@
             var skillData = skillId ? SKILL_CARDS.find(function (s) { return s.id === skillId; }) : null;
             var skillEntry = skillId ? GameState.state.collection[skillId] : null;
 
-            html += '<div class="skill-slot-item" data-hero-id="' + heroId + '" data-slot-key="' + slot.key + '" data-slot-type="skill" style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;cursor:pointer;border:1px solid ' + (skillData ? '#9b59b6' : '#555') + ';">';
+            html += '<div class="hero-skill-slot" data-hero-id="' + heroId + '" data-slot-key="' + slot.key + '" data-slot-type="skill" style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;cursor:pointer;border:1px solid ' + (skillData ? '#9b59b6' : '#555') + ';">';
             html += '<div style="font-size:11px;color:#8b9dab;margin-bottom:4px;">' + slot.label + '</div>';
             if (skillData && skillEntry) {
                 html += '<div style="font-size:13px;color:#f5e6c8;font-weight:bold;">' + skillData.name + '</div>';
@@ -295,63 +301,56 @@
         }
         html += '</div>';
 
-        equipSection.innerHTML = html;
+        window.showModal((cardData ? cardData.name : heroId) + ' 的装备', html, null);
 
         setTimeout(function () {
-            var closeBtn = document.getElementById('close-equip-panel');
-            if (closeBtn) {
-                closeBtn.onclick = function () {
-                    hideEquipPanel();
-                };
-            }
-
-            var equipSlotItems = equipSection.querySelectorAll('.equip-slot-item');
+            var equipSlotItems = document.querySelectorAll('.hero-equip-slot');
             for (var i = 0; i < equipSlotItems.length; i++) {
-                equipSlotItems[i].onclick = function () {
-                    var hid = this.getAttribute('data-hero-id');
-                    var slotKey = this.getAttribute('data-slot-key');
-                    var equipType = this.getAttribute('data-equip-type');
-                    var formation = GameState.state.formation;
-                    var currentEquip = formation.equips[hid] ? formation.equips[hid][slotKey] : null;
+                (function (item) {
+                    item.onclick = function () {
+                        var hid = item.getAttribute('data-hero-id');
+                        var slotKey = item.getAttribute('data-slot-key');
+                        var equipType = item.getAttribute('data-equip-type');
+                        var formation = GameState.state.formation;
+                        var currentEquip = formation.equips[hid] ? formation.equips[hid][slotKey] : null;
 
-                    if (currentEquip) {
-                        formation.equips[hid][slotKey] = null;
-                        GameState.setFormation(formation);
-                        renderEquipPanel(hid);
-                        updateFormationPower();
-                        window.showToast('已卸下装备');
-                    } else {
-                        showEquipSelector(hid, slotKey, equipType);
-                    }
-                };
+                        if (currentEquip) {
+                            formation.equips[hid][slotKey] = null;
+                            GameState.setFormation(formation);
+                            window.hideModal();
+                            setTimeout(function () { showHeroEquipModal(hid); }, 100);
+                            updateFormationPower();
+                            window.showToast('已卸下装备');
+                        } else {
+                            showEquipSelector(hid, slotKey, equipType);
+                        }
+                    };
+                })(equipSlotItems[i]);
             }
 
-            var skillSlotItems = equipSection.querySelectorAll('.skill-slot-item');
+            var skillSlotItems = document.querySelectorAll('.hero-skill-slot');
             for (var i = 0; i < skillSlotItems.length; i++) {
-                skillSlotItems[i].onclick = function () {
-                    var hid = this.getAttribute('data-hero-id');
-                    var slotKey = this.getAttribute('data-slot-key');
-                    var formation = GameState.state.formation;
-                    var currentSkill = formation.skills[hid] ? formation.skills[hid][slotKey] : null;
+                (function (item) {
+                    item.onclick = function () {
+                        var hid = item.getAttribute('data-hero-id');
+                        var slotKey = item.getAttribute('data-slot-key');
+                        var formation = GameState.state.formation;
+                        var currentSkill = formation.skills[hid] ? formation.skills[hid][slotKey] : null;
 
-                    if (currentSkill) {
-                        formation.skills[hid][slotKey] = null;
-                        GameState.setFormation(formation);
-                        renderEquipPanel(hid);
-                        updateFormationPower();
-                        window.showToast('已卸下秘籍');
-                    } else {
-                        showSkillSelector(hid, slotKey);
-                    }
-                };
+                        if (currentSkill) {
+                            formation.skills[hid][slotKey] = null;
+                            GameState.setFormation(formation);
+                            window.hideModal();
+                            setTimeout(function () { showHeroEquipModal(hid); }, 100);
+                            updateFormationPower();
+                            window.showToast('已卸下秘籍');
+                        } else {
+                            showSkillSelector(hid, slotKey);
+                        }
+                    };
+                })(skillSlotItems[i]);
             }
-        }, 50);
-    }
-
-    function hideEquipPanel() {
-        var equipSection = document.getElementById('formation-equip');
-        if (equipSection) equipSection.style.display = 'none';
-        selectedHeroId = null;
+        }, 100);
     }
 
     function showEquipSelector(heroId, slotKey, equipType) {
@@ -372,7 +371,7 @@
         var html = '';
 
         if (allEquips.length === 0) {
-            html += '<div style="text-align:center;color:#8b9dab;padding:24px;">暂无可用装备</div>';
+            html += '<div style="text-align:center;color:#8b9dab;padding:24px;">暂无可用装备，去酒馆抽取吧！</div>';
         } else {
             html += '<div style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding:8px;">';
             for (var i = 0; i < allEquips.length; i++) {
@@ -398,19 +397,21 @@
         setTimeout(function () {
             var items = document.querySelectorAll('.equip-select-item');
             for (var i = 0; i < items.length; i++) {
-                items[i].onclick = function () {
-                    var equipId = this.getAttribute('data-equip-id');
-                    var formation = GameState.state.formation;
-                    if (!formation.equips[heroId]) formation.equips[heroId] = { weapon: null, armor: null, accessory1: null, accessory2: null };
-                    formation.equips[heroId][slotKey] = equipId;
-                    GameState.setFormation(formation);
-                    window.hideModal();
-                    renderEquipPanel(heroId);
-                    updateFormationPower();
-                    window.showToast('装备成功！');
-                };
+                (function (item) {
+                    item.onclick = function () {
+                        var equipId = item.getAttribute('data-equip-id');
+                        var formation = GameState.state.formation;
+                        if (!formation.equips[heroId]) formation.equips[heroId] = { weapon: null, armor: null, accessory1: null, accessory2: null };
+                        formation.equips[heroId][slotKey] = equipId;
+                        GameState.setFormation(formation);
+                        window.hideModal();
+                        setTimeout(function () { showHeroEquipModal(heroId); }, 100);
+                        updateFormationPower();
+                        window.showToast('装备成功！');
+                    };
+                })(items[i]);
             }
-        }, 50);
+        }, 100);
     }
 
     function showSkillSelector(heroId, slotKey) {
@@ -422,7 +423,7 @@
         var html = '';
 
         if (available.length === 0) {
-            html += '<div style="text-align:center;color:#8b9dab;padding:24px;">暂无可用秘籍</div>';
+            html += '<div style="text-align:center;color:#8b9dab;padding:24px;">暂无可用秘籍，去酒馆抽取吧！</div>';
         } else {
             html += '<div style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;padding:8px;">';
             for (var i = 0; i < available.length; i++) {
@@ -444,19 +445,21 @@
         setTimeout(function () {
             var items = document.querySelectorAll('.skill-select-item');
             for (var i = 0; i < items.length; i++) {
-                items[i].onclick = function () {
-                    var skillId = this.getAttribute('data-skill-id');
-                    var formation = GameState.state.formation;
-                    if (!formation.skills[heroId]) formation.skills[heroId] = { skill1: null, skill2: null, skill3: null, skill4: null };
-                    formation.skills[heroId][slotKey] = skillId;
-                    GameState.setFormation(formation);
-                    window.hideModal();
-                    renderEquipPanel(heroId);
-                    updateFormationPower();
-                    window.showToast('秘籍装备成功！');
-                };
+                (function (item) {
+                    item.onclick = function () {
+                        var skillId = item.getAttribute('data-skill-id');
+                        var formation = GameState.state.formation;
+                        if (!formation.skills[heroId]) formation.skills[heroId] = { skill1: null, skill2: null, skill3: null, skill4: null };
+                        formation.skills[heroId][slotKey] = skillId;
+                        GameState.setFormation(formation);
+                        window.hideModal();
+                        setTimeout(function () { showHeroEquipModal(heroId); }, 100);
+                        updateFormationPower();
+                        window.showToast('秘籍装备成功！');
+                    };
+                })(items[i]);
             }
-        }, 50);
+        }, 100);
     }
 
     function updateFormationPower() {
