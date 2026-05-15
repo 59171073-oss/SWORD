@@ -945,7 +945,15 @@ const PROTAGONIST = {
     element: '金',
     baseStats: { hp: 1000, atk: 100, def: 80, agi: 90 },
     description: '初入江湖的少年侠客，前途无量。',
-    imageUrl: 'https://robohash.org/shaoxia?set=set3&bgset=bg1',
+    imageUrl: 'assets/protagonist_star1.jpg',
+    starImageUrls: [
+        'assets/protagonist_star1.jpg',
+        'assets/protagonist_star2.jpg',
+        'assets/protagonist_star3.jpg',
+        'assets/protagonist_star4.jpg',
+        'assets/protagonist_star5.jpg',
+        'assets/protagonist_star6.jpg'
+    ],
     innateSkill: {
         name: '江湖新秀',
         description: '身法+10，攻击时有15%几率造成暴击',

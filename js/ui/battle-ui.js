@@ -29,6 +29,10 @@ function getEnemyImageUrl(name) {
 function getUnitImageUrl(unit) {
     if (unit.side === 'player') {
         if (unit.isProtagonist) {
+            var star = unit.star || 1;
+            if (PROTAGONIST.starImageUrls && PROTAGONIST.starImageUrls[star - 1]) {
+                return PROTAGONIST.starImageUrls[star - 1];
+            }
             return PROTAGONIST.imageUrl || '';
         }
         if (unit.heroId) {
