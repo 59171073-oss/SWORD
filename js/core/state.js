@@ -9,9 +9,14 @@ const GameState = {
                 this.state.protagonist = {
                     level: 1,
                     exp: 0,
+                    star: 1,
                     equips: { weapon: null, armor: null, accessory1: null, accessory2: null },
                     skills: { skill1: null, skill2: null, skill3: null, skill4: null }
                 };
+                this.save();
+            }
+            if (this.state.protagonist.star === undefined) {
+                this.state.protagonist.star = 1;
                 this.save();
             }
             if (!this.state.stageProgress) {
@@ -107,6 +112,7 @@ const GameState = {
             protagonist: {
                 level: 1,
                 exp: 0,
+                star: 1,
                 equips: { weapon: null, armor: null, accessory1: null, accessory2: null },
                 skills: { skill1: null, skill2: null, skill3: null, skill4: null }
             },
@@ -459,7 +465,8 @@ const GameState = {
             classId: 'JIANKE',
             name: PROTAGONIST.name,
             level: p.level,
-            isProtagonist: true
+            isProtagonist: true,
+            star: p.star || 1
         };
     },
 
