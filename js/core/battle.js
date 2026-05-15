@@ -828,6 +828,7 @@ var BattleEngine = {
             }
             unitsSnapshot.push({
                 id: u.id,
+                heroId: u.heroId || null,
                 name: u.name,
                 side: u.side,
                 classId: u.classId,
