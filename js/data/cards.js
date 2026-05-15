@@ -14,7 +14,15 @@ const CHARACTER_CARDS = [
         rarity: 'COMMON',
         baseStats: { hp: 500, atk: 50, def: 40, agi: 60 },
         description: '府中家丁，忠心耿耿，虽无绝世武功，却有一身蛮力。',
-        imageUrl: 'https://robohash.org/jia_ding?set=set3&bgset=bg1',
+        imageUrl: 'assets/jiading_star1.jpg',
+        starImageUrls: [
+            'assets/jiading_star1.jpg',
+            'assets/jiading_star2.jpg',
+            'assets/jiading_star3.jpg',
+            'assets/jiading_star4.jpg',
+            'assets/jiading_star5.jpg',
+            'assets/jiading_star6.jpg'
+        ],
         innateSkill: {
             name: '忠心护主',
             description: '为主人挡刀时，防御提升10%',
