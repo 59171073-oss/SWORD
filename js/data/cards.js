@@ -14,7 +14,7 @@ const CHARACTER_CARDS = [
         rarity: 'COMMON',
         baseStats: { hp: 500, atk: 50, def: 40, agi: 60 },
         description: '府中家丁，忠心耿耿，虽无绝世武功，却有一身蛮力。',
-        imageUrl: 'https://robohash.org/jia_ding?set=set3&bgset=bg1',
+        imageUrl: 'assets/主角与家丁.jpg',
         innateSkill: {
             name: '忠心护主',
             description: '为主人挡刀时，防御提升10%',
@@ -29,7 +29,7 @@ const CHARACTER_CARDS = [
         rarity: 'FINE',
         baseStats: { hp: 90, atk: 60, def: 60, agi: 80 },
         description: '主角的侍女，从小跟随主角，温柔体贴，擅长医术。',
-        imageUrl: 'https://robohash.org/qin_ziwei?set=set3&bgset=bg1',
+        imageUrl: '',
         isHealer: true,
         healMultiplier: 0.3,
         innateSkill: {
@@ -945,7 +945,7 @@ const PROTAGONIST = {
     element: '金',
     baseStats: { hp: 1000, atk: 100, def: 80, agi: 90 },
     description: '初入江湖的少年侠客，前途无量。',
-    imageUrl: 'https://robohash.org/shaoxia?set=set3&bgset=bg1',
+    imageUrl: 'assets/主角与家丁.jpg',
     innateSkill: {
         name: '江湖新秀',
         description: '身法+10，攻击时有15%几率造成暴击',
