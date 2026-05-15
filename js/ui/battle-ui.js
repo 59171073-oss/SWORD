@@ -1,501 +1,389 @@
-(function () {
+var ENEMY_IMAGES = {
+    '山贼甲': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=rugged%20chinese%20bandit%20with%20scar%20on%20face%2C%20wearing%20brown%20rags%2C%20holding%20club%2C%20wuxia%20style%2C%20portrait%2C%20menacing&image_size=square_hd',
+    '山贼乙': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=thin%20chinese%20bandit%20with%20sneaky%20grin%2C%20wearing%20torn%20gray%20clothes%2C%20holding%20dagger%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '山贼丙': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=burly%20chinese%20bandit%20with%20thick%20beard%2C%20wearing%20dark%20leather%20armor%2C%20holding%20spear%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '恶霸头目': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cruel%20chinese%20gang%20leader%20with%20topknot%2C%20wearing%20red%20and%20black%20robes%2C%20holding%20dao%20blade%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '恶霸打手': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=muscular%20chinese%20thug%20with%20tattoos%2C%20wearing%20sleeveless%20shirt%2C%20bare%20fists%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '恶霸喽啰': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=sneaky%20chinese%20minion%20with%20thin%20mustache%2C%20wearing%20dirty%20green%20clothes%2C%20holding%20short%20sword%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '寨门守卫': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=armored%20chinese%20gate%20guard%2C%20wearing%20iron%20helmet%20and%20scale%20armor%2C%20holding%20halberd%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '寨中刀手': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20swordsman%20in%20black%20outfit%2C%20dual%20wielding%20dao%20blades%2C%20wuxia%20style%2C%20portrait%2C%20fierce%20eyes&image_size=square_hd',
+    '寨中剑手': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=elegant%20chinese%20swordsman%20in%20white%20robe%2C%20holding%20slender%20jian%20sword%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '寨中暗手': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=shadowy%20chinese%20assassin%20in%20dark%20hood%2C%20holding%20hidden%20needles%2C%20wuxia%20style%2C%20portrait%2C%20mysterious&image_size=square_hd',
+    '蛇谷守卫': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20snake%20valley%20guard%20with%20snake%20motif%20armor%2C%20holding%20snake%20spear%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '蛇谷刺客': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20snake%20assassin%20with%20green%20veil%2C%20holding%20poison%20daggers%2C%20wuxia%20style%2C%20portrait%2C%20venomous&image_size=square_hd',
+    '蛇谷剑客': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20snake%20swordsman%20with%20serpent%20sword%2C%20wearing%20emerald%20robes%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '蛇谷术士': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20snake%20sorcerer%20with%20staff%2C%20wearing%20dark%20purple%20robes%2C%20wuxia%20style%2C%20portrait%2C%20mystical&image_size=square_hd',
+    '蛇谷医者': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20snake%20healer%20with%20medicine%20bag%2C%20wearing%20olive%20green%20robes%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '头目·赤炎': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=fearsome%20chinese%20bandit%20chief%20with%20flaming%20dao%2C%20wearing%20crimson%20battle%20armor%2C%20wuxia%20style%2C%20portrait%2C%20powerful&image_size=square_hd',
+    '头目护卫': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20elite%20bodyguard%20in%20heavy%20iron%20armor%2C%20holding%20shield%20and%20mace%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '头目剑客': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20elite%20swordsman%20with%20golden%20jian%2C%20wearing%20blue%20battle%20robes%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '头目暗手': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20elite%20assassin%20with%20twin%20needles%2C%20wearing%20shadow%20cloak%2C%20wuxia%20style%2C%20portrait&image_size=square_hd',
+    '头目军师': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20strategist%20with%20fan%2C%20wearing%20dark%20blue%20scholar%20robes%2C%20wuxia%20style%2C%20portrait%2C%20cunning&image_size=square_hd',
+    'default_enemy': 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=chinese%20martial%20artist%20enemy%2C%20wuxia%20style%2C%20portrait%2C%20determined&image_size=square_hd'
+};
 
-    var _currentStageId = null;
-    var _isSpedUp = false;
-    var _battleEnded = false;
+function getEnemyImageUrl(name) {
+    return ENEMY_IMAGES[name] || ENEMY_IMAGES['default_enemy'];
+}
 
-    var styleEl = document.createElement('style');
-    styleEl.textContent =
-        '@keyframes victoryPulse{0%,100%{text-shadow:0 0 12px rgba(212,160,23,0.5)}50%{text-shadow:0 0 24px rgba(212,160,23,0.8),0 0 48px rgba(212,160,23,0.4)}}' +
-        '@keyframes defeatShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}' +
-        '@keyframes attackAnim{0%{transform:scale(1)}30%{transform:scale(1.15) translateY(-4px)}100%{transform:scale(1)}}' +
-        '@keyframes hurtAnim{0%{transform:translateX(0)}20%{transform:translateX(-5px);filter:brightness(2)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}100%{transform:translateX(0)}}' +
-        '.attack-anim{animation:attackAnim 0.3s ease!important;z-index:5}' +
-        '.hurt-anim{animation:hurtAnim 0.3s ease!important}';
-    document.head.appendChild(styleEl);
-
-    window.startBattle = function (stageId) {
-        var stage = LEVELS.find(function (s) { return s.id === stageId; });
-        if (!stage) return;
-
-        _currentStageId = stageId;
-        _isSpedUp = false;
-        _battleEnded = false;
-
-        var playerFormation = GameState.getFormation();
-
-        if (!playerFormation || !playerFormation.slots || playerFormation.slots.every(function (id) { return !id; })) {
-            window.showToast('编队中无可用侠客');
-            return;
+function getUnitImageUrl(unit) {
+    if (unit.side === 'player') {
+        if (unit.isProtagonist) {
+            return PROTAGONIST.imageUrl || '';
         }
+        if (unit.heroId) {
+            var cardData = CHARACTER_CARDS.find(function (c) { return c.id === unit.heroId; });
+            return cardData ? (cardData.imageUrl || '') : '';
+        }
+    }
+    return getEnemyImageUrl(unit.name);
+}
 
-        var enemyTeam = stage.enemies.map(function (e, i) {
-            return {
-                id: 'enemy_' + i,
-                name: e.name,
-                classId: e.classId,
-                element: e.element,
-                rarity: e.rarity,
-                level: e.level,
-                stats: { hp: e.stats.hp, atk: e.stats.atk, def: e.stats.def, spd: e.stats.spd }
-            };
-        });
+var BattleUI = {
+    battleEngine: null,
+    state: null,
+    overlay: null,
 
-        BattleEngine.init(playerFormation, enemyTeam, stageId, onAction, onEnd);
+    startBattle: function(playerFormation, enemyTeam, stageId) {
+        try {
+            this.battleEngine = BattleEngine;
 
-        switchPage('battle');
+            this.overlay = document.createElement('div');
+            this.overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#0a0503;z-index:3000;display:flex;flex-direction:column;overflow:hidden;';
 
-        var titleEl = document.getElementById('battle-title');
-        if (titleEl) titleEl.textContent = stage.chapterName + '·' + stage.stageName;
+            this.overlay.innerHTML =
+                '<div style="flex:1;display:flex;flex-direction:column;padding:10px;box-sizing:border-box;overflow:hidden;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0;">' +
+                        '<div style="color:#d4a017;font-size:16px;font-weight:bold;">⚔️ 战斗</div>' +
+                        '<div style="color:#8b9dab;font-size:13px;">回合: <span id="battle-round">0</span></div>' +
+                    '</div>' +
+                    '<div style="display:flex;gap:6px;flex:1;min-height:0;">' +
+                        '<div style="flex:1;display:flex;flex-direction:column;gap:4px;overflow-y:auto;" id="enemy-zone"></div>' +
+                        '<div style="display:flex;align-items:center;color:#d4a017;font-size:18px;font-weight:bold;flex-shrink:0;">VS</div>' +
+                        '<div style="flex:1;display:flex;flex-direction:column;gap:4px;overflow-y:auto;" id="player-zone"></div>' +
+                    '</div>' +
+                    '<div id="battle-action" style="min-height:36px;padding:8px 12px;margin-top:6px;background:linear-gradient(135deg,rgba(42,26,16,0.9),rgba(26,10,5,0.9));border:1px solid rgba(212,160,23,0.4);border-radius:8px;font-size:14px;color:#f5e6c8;text-align:center;flex-shrink:0;line-height:1.5;"></div>' +
+                    '<div id="battle-log" style="height:90px;overflow-y:auto;background:rgba(0,0,0,0.4);border-radius:8px;padding:6px 8px;margin-top:6px;font-size:11px;color:#8b9dab;border:1px solid rgba(212,160,23,0.15);flex-shrink:0;"></div>' +
+                    '<div style="display:flex;gap:8px;justify-content:center;margin-top:6px;flex-shrink:0;">' +
+                        '<button class="btn-ancient" id="btn-speed-up" style="padding:6px 16px;font-size:12px;">加速</button>' +
+                        '<button class="btn-ancient" id="btn-skip" style="padding:6px 16px;font-size:12px;">跳过</button>' +
+                    '</div>' +
+                '</div>';
 
-        var logEl = document.getElementById('battle-log');
-        if (logEl) logEl.innerHTML = '';
+            document.body.appendChild(this.overlay);
 
-        var actionsEl = document.getElementById('battle-actions');
-        if (actionsEl) actionsEl.style.display = 'flex';
+            var self = this;
+            document.getElementById('btn-speed-up').onclick = function() { self.toggleSpeed(); };
+            document.getElementById('btn-skip').onclick = function() { self.skipBattle(); };
 
-        var speedBtn = document.getElementById('btn-battle-speed');
-        if (speedBtn) speedBtn.textContent = '加速';
+            this.battleEngine.init(
+                playerFormation,
+                enemyTeam,
+                stageId,
+                function(action) { self.onAction(action); },
+                function(result) { self.onBattleEnd(result); }
+            );
 
-        var state = BattleEngine.getState();
-        renderBattleField(state);
+            this.updateDisplay();
+            this.showActionText('⚔️ 战斗开始！');
+            this.battleEngine.start();
+        } catch (e) {
+            console.error('BattleUI.startBattle error:', e);
+            if (this.overlay) {
+                this.overlay.remove();
+                this.overlay = null;
+            }
+            window.showToast('战斗初始化失败：' + e.message);
+        }
+    },
 
-        BattleEngine.start();
-    };
-
-    window.renderBattleField = function (state) {
-        if (!state) return;
+    updateDisplay: function() {
+        this.state = this.battleEngine.getState();
+        if (!this.state) return;
 
         var roundEl = document.getElementById('battle-round');
-        if (roundEl) roundEl.textContent = state.round || 1;
+        if (roundEl) roundEl.textContent = this.state.round;
 
-        renderBattleOrder(state);
-        renderBattleCards(state);
-    };
+        this.renderUnits('player-zone', this.state.units.filter(function(u) { return u.side === 'player'; }));
+        this.renderUnits('enemy-zone', this.state.units.filter(function(u) { return u.side === 'enemy'; }));
+    },
 
-    function renderBattleOrder(state) {
-        var orderEl = document.getElementById('battle-order');
-        if (!orderEl) return;
-
-        orderEl.innerHTML = '';
-
-        var units = state.units || [];
-        var actionOrder = state.actionOrder || [];
-
-        actionOrder.forEach(function (unitId) {
-            var unit = null;
-            for (var i = 0; i < units.length; i++) {
-                if (units[i].id === unitId) { unit = units[i]; break; }
-            }
-            if (!unit) return;
-
-            var classData = CLASSES[unit.classId];
-            var orderUnit = document.createElement('div');
-            orderUnit.className = 'order-unit';
-            orderUnit.setAttribute('data-unit-id', unitId);
-
-            if (unit.side === 'player') {
-                orderUnit.classList.add('player-unit');
-            } else {
-                orderUnit.classList.add('enemy-unit');
-            }
-
-            if (!unit.alive) {
-                orderUnit.classList.add('dead-unit');
-            }
-
-            orderUnit.textContent = classData ? classData.icon : '?';
-            orderUnit.title = unit.name;
-            orderEl.appendChild(orderUnit);
-        });
-    }
-
-    function renderBattleCards(state) {
-        var enemyCardsEl = document.getElementById('battle-enemy-cards');
-        var playerCardsEl = document.getElementById('battle-player-cards');
-        if (!enemyCardsEl || !playerCardsEl) return;
-
-        var units = state.units || [];
-        var enemyHtml = '';
-        var playerHtml = '';
-
-        for (var i = 0; i < units.length; i++) {
-            if (units[i].side === 'enemy') {
-                enemyHtml += renderBattleCard(units[i]);
-            } else {
-                playerHtml += renderBattleCard(units[i]);
-            }
-        }
-
-        enemyCardsEl.innerHTML = enemyHtml;
-        playerCardsEl.innerHTML = playerHtml;
-    }
-
-    window.renderBattleCard = function (unit) {
-        var classData = CLASSES[unit.classId];
-        var elementIcon = ELEMENT_ICONS[unit.element] || '';
-        var hpPct = unit.maxHp > 0 ? Math.max(0, Math.min(100, (unit.currentHp / unit.maxHp) * 100)) : 0;
-        var hpColor = hpPct > 60 ? '#2ecc71' : (hpPct > 30 ? '#f1c40f' : '#e74c3c');
-        var sideClass = unit.side === 'player' ? 'player-unit' : 'enemy-unit';
-        var deadClass = !unit.alive ? ' dead' : '';
-
-        var html = '<div class="battle-unit ' + sideClass + deadClass + '" data-unit-id="' + unit.id + '">';
-        html += '<div class="unit-icon">' + (classData ? classData.icon : '❓') + '</div>';
-        html += '<div class="unit-name">' + unit.name + '</div>';
-
-        if (unit.controlled && unit.controlled > 0) {
-            html += '<div style="font-size:10px;line-height:1;">🔒</div>';
-        }
-
-        if (unit.shield && unit.shield > 0) {
-            var shieldPct = unit.maxHp > 0 ? Math.min(100, (unit.shield / unit.maxHp) * 100) : 0;
-            html += '<div style="width:100%;height:2px;background:rgba(0,0,0,0.5);border-radius:1px;margin-top:2px;overflow:hidden;">';
-            html += '<div style="width:' + shieldPct + '%;height:100%;background:#3498db;border-radius:1px;transition:width 0.3s;"></div>';
-            html += '</div>';
-        }
-
-        html += '<div class="unit-hp-bar">';
-        html += '<div class="unit-hp-fill" style="width:' + hpPct + '%;background:' + hpColor + ';"></div>';
-        html += '</div>';
-        html += '<div style="font-size:7px;color:var(--cyan-gray);line-height:1.2;">' + Math.max(0, Math.floor(unit.currentHp)) + '/' + unit.maxHp + '</div>';
-        html += '<div style="font-size:8px;color:var(--cyan-gray);margin-top:1px;line-height:1.2;">' + elementIcon + ' Lv.' + (unit.level || 1) + '</div>';
-        html += '</div>';
-
-        return html;
-    };
-
-    function onAction(actionInfo) {
-        if (_battleEnded) return;
-
-        var state = BattleEngine.getState();
-        renderBattleField(state);
-
-        if (actionInfo.actor) {
-            var actorOrderEl = document.querySelector('.order-unit[data-unit-id="' + actionInfo.actor.id + '"]');
-            if (actorOrderEl) actorOrderEl.classList.add('active-unit');
-
-            var actorCardEl = document.querySelector('.battle-unit[data-unit-id="' + actionInfo.actor.id + '"]');
-            if (actorCardEl) {
-                actorCardEl.classList.add('attack-anim');
-                setTimeout(function () { actorCardEl.classList.remove('attack-anim'); }, 300);
-            }
-        }
-
-        if (actionInfo.target) {
-            var targetCardEl = document.querySelector('.battle-unit[data-unit-id="' + actionInfo.target.id + '"]');
-            if (targetCardEl) {
-                targetCardEl.classList.add('hurt-anim');
-                setTimeout(function () { targetCardEl.classList.remove('hurt-anim'); }, 300);
-            }
-        }
-
-        if (actionInfo.damage && actionInfo.target) {
-            var floatEl = document.querySelector('.battle-unit[data-unit-id="' + actionInfo.target.id + '"]');
-            if (floatEl) {
-                var rect = floatEl.getBoundingClientRect();
-                var x = rect.left + rect.width / 2;
-                var y = rect.top;
-                if (actionInfo.isCrit) {
-                    showFloatingText('暴击 ' + actionInfo.damage, 'damage', x, y);
-                } else {
-                    showFloatingText('-' + actionInfo.damage, 'damage', x, y);
-                }
-            }
-        }
-
-        if (actionInfo.heal) {
-            var healTargetEl = null;
-            if (actionInfo.target) {
-                healTargetEl = document.querySelector('.battle-unit[data-unit-id="' + actionInfo.target.id + '"]');
-            }
-            if (!healTargetEl && actionInfo.actor) {
-                healTargetEl = document.querySelector('.battle-unit[data-unit-id="' + actionInfo.actor.id + '"]');
-            }
-            if (healTargetEl) {
-                var healRect = healTargetEl.getBoundingClientRect();
-                showFloatingText('+' + actionInfo.heal, 'heal', healRect.left + healRect.width / 2, healRect.top);
-            }
-        }
-
-        if (actionInfo.elementModifier && actionInfo.elementModifier !== 1.0 && actionInfo.target) {
-            var elemEl = document.querySelector('.battle-unit[data-unit-id="' + actionInfo.target.id + '"]');
-            if (elemEl) {
-                var elemRect = elemEl.getBoundingClientRect();
-                var elemText = actionInfo.elementModifier > 1.0 ? '克制!' : '被克!';
-                showFloatingText(elemText, 'gold', elemRect.left + elemRect.width / 2, elemRect.top + 20);
-            }
-        }
-
-        var logMsg = buildActionLog(actionInfo);
-        addBattleLog(logMsg, actionInfo.type);
-    }
-
-    function buildActionLog(actionInfo) {
-        var actorName = actionInfo.actor ? actionInfo.actor.name : '???';
-        var targetName = actionInfo.target ? actionInfo.target.name : '???';
-        var msg = '';
-
-        switch (actionInfo.type) {
-            case 'normal_attack':
-                msg = '<span class="log-actor">' + actorName + '</span> 攻击 <span class="log-actor">' + targetName + '</span>';
-                if (actionInfo.damage) msg += '，造成 <span class="log-damage">' + actionInfo.damage + '</span> 点伤害';
-                if (actionInfo.isCrit) msg += '（暴击！）';
-                if (actionInfo.elementModifier > 1.0) msg += ' <span class="log-element" style="color:var(--gold);">克制!</span>';
-                else if (actionInfo.elementModifier < 1.0) msg += ' <span class="log-element" style="color:var(--cyan-gray);">被克!</span>';
-                break;
-            case 'skill':
-                var skillType = actionInfo.skill ? actionInfo.skill.type : '';
-                if (skillType === 'heal') {
-                    msg = '<span class="log-actor">' + actorName + '</span> 治疗 <span class="log-actor">' + targetName + '</span>';
-                    if (actionInfo.heal) msg += '，恢复 <span class="log-heal">' + actionInfo.heal + '</span> 点生命';
-                    if (actionInfo.skill && actionInfo.skill.name) msg += '（' + actionInfo.skill.name + '）';
-                } else if (skillType === 'control') {
-                    msg = '<span class="log-actor">' + actorName + '</span> 对 <span class="log-actor">' + targetName + '</span> 施放 <span style="color:var(--azure);">' + (actionInfo.skill ? actionInfo.skill.name : '控制术') + '</span>';
-                } else {
-                    msg = '<span class="log-actor">' + actorName + '</span> 施放 <span style="color:var(--azure);">' + (actionInfo.skill ? actionInfo.skill.name : '技能') + '</span>';
-                    if (actionInfo.target) msg += ' 对 <span class="log-actor">' + targetName + '</span>';
-                    if (actionInfo.damage) msg += '，造成 <span class="log-damage">' + actionInfo.damage + '</span> 点伤害';
-                    if (actionInfo.heal) msg += '，恢复 <span class="log-heal">' + actionInfo.heal + '</span> 点生命';
-                    if (actionInfo.isCrit) msg += '（暴击！）';
-                }
-                break;
-            case 'controlled':
-                msg = '<span class="log-actor">' + actorName + '</span> 被控制，无法行动';
-                break;
-            default:
-                msg = '<span class="log-actor">' + actorName + '</span> 行动';
-        }
-
-        return msg;
-    }
-
-    function onEnd(result) {
-        _battleEnded = true;
-
-        var actionsEl = document.getElementById('battle-actions');
-        if (actionsEl) actionsEl.style.display = 'none';
-
-        setTimeout(function () {
-            showBattleResult(result, _currentStageId);
-        }, 1000);
-    }
-
-    window.showBattleResult = function (result, stageId) {
-        var existingOverlay = document.querySelector('.battle-result-overlay');
-        if (existingOverlay && existingOverlay.parentNode) {
-            existingOverlay.parentNode.removeChild(existingOverlay);
-        }
-
-        var stage = LEVELS.find(function (s) { return s.id === stageId; });
-        var isVictory = result.winner === 'player';
+    renderUnits: function(zoneId, units) {
+        var zone = document.getElementById(zoneId);
+        if (!zone) return;
 
         var html = '';
+        for (var i = 0; i < units.length; i++) {
+            var unit = units[i];
+            var hpPct = unit.maxHp > 0 ? Math.round((unit.currentHp / unit.maxHp) * 100) : 0;
+            var hpColor = hpPct > 60 ? '#2ecc71' : (hpPct > 30 ? '#d4a017' : '#e74c3c');
+            var classData = CLASSES[unit.classId];
+            var imageUrl = getUnitImageUrl(unit);
 
-        if (isVictory) {
-            html += '<div class="result-title victory" style="animation:victoryPulse 1.5s ease infinite;">大获全胜！</div>';
-            html += '<div class="result-rewards">';
+            html += '<div style="background:rgba(0,0,0,0.3);padding:5px;border-radius:8px;border-left:3px solid ' + (unit.side === 'player' ? '#3498db' : '#e74c3c') + ';' + (!unit.alive ? 'opacity:0.4;' : '') + '">';
+            html += '<div style="display:flex;align-items:center;gap:6px;">';
 
-            if (stage) {
-                html += '<div style="margin-bottom:8px;">通关：' + stage.chapterName + '·' + stage.stageName + '</div>';
+            if (imageUrl) {
+                html += '<img src="' + imageUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:2px solid ' + (unit.side === 'player' ? '#3498db' : '#e74c3c') + ';flex-shrink:0;" onerror="this.outerHTML=\'<div style=width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(0,0,0,0.3);border-radius:6px;flex-shrink:0;>' + (classData ? classData.icon : '?') + '</div>\'">';
+            } else {
+                html += '<div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(0,0,0,0.3);border-radius:6px;flex-shrink:0;">' + (classData ? classData.icon : '?') + '</div>';
             }
 
-            html += '<div>战斗回合：' + result.rounds + '</div>';
-            html += '<div>存活角色：' + (result.playerSurvivors || 0) + '</div>';
+            html += '<div style="flex:1;min-width:0;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+            html += '<span style="color:#f5e6c8;font-size:12px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + unit.name + '</span>';
+            if (unit.isProtagonist) {
+                html += '<span style="color:#d4a017;font-size:9px;flex-shrink:0;">主角</span>';
+            }
+            html += '</div>';
+            html += '<div style="background:rgba(0,0,0,0.3);height:6px;border-radius:3px;margin:2px 0;overflow:hidden;">';
+            html += '<div style="height:100%;width:' + hpPct + '%;background:' + hpColor + ';border-radius:3px;transition:width 0.3s;"></div>';
+            html += '</div>';
+            html += '<div style="display:flex;justify-content:space-between;font-size:9px;color:#8b9dab;">';
+            html += '<span>' + Math.max(0, Math.floor(unit.currentHp)) + '/' + unit.maxHp + '</span>';
+            html += '<span>' + unit.element + '</span>';
+            html += '</div>';
+            if (unit.shield > 0) {
+                html += '<div style="color:#3498db;font-size:9px;">🛡' + unit.shield + '</div>';
+            }
+            if (unit.controlled > 0) {
+                html += '<div style="color:#9b59b6;font-size:9px;">🔒定身</div>';
+            }
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        }
+        zone.innerHTML = html;
+    },
 
-            var reward = GameState.clearStage(stageId);
-            if (reward) {
-                html += '<div class="reward-gold" style="margin-top:8px;">💰 ' + reward.gold + '</div>';
-                if (reward.isFirstClear) {
-                    html += '<span class="reward-first">🎉 首次通关额外奖励：💰 ' + reward.firstClearGold + '</span>';
+    onAction: function(action) {
+        this.showActionDetail(action);
+        this.logAction(action);
+        this.updateDisplay();
+    },
+
+    showActionText: function(text) {
+        var el = document.getElementById('battle-action');
+        if (!el) return;
+        el.innerHTML = text;
+    },
+
+    showActionDetail: function(action) {
+        var el = document.getElementById('battle-action');
+        if (!el) return;
+
+        var text = '';
+        var actorName = action.actor ? action.actor.name : '???';
+
+        if (action.type === 'normal_attack') {
+            if (action.dodged) {
+                text = '<span style="color:#f5e6c8;">' + actorName + '</span> 挥招攻击，<span style="color:#3498db;">' + (action.target ? action.target.name : '???') + '</span> <span style="color:#d4a017;">身法灵动，闪避开来！</span>';
+            } else {
+                text = '<span style="color:#f5e6c8;">' + actorName + '</span> 挥招攻击 <span style="color:#e74c3c;">' + (action.target ? action.target.name : '???') + '</span>';
+                if (action.damage > 0) {
+                    text += '，造成 <span style="color:#e74c3c;font-weight:bold;font-size:16px;">' + action.damage + '</span> 点伤害';
+                    if (action.isCrit) text += ' <span style="color:#d4a017;font-weight:bold;">💥暴击！</span>';
+                }
+                if (action.elementModifier && action.elementModifier > 1) {
+                    text += ' <span style="color:#3498db;">【属性克制】</span>';
                 }
             }
-
-            var taskResults = checkTaskCard(stageId, result);
-            if (taskResults.length > 0) {
-                html += '<div style="margin-top:12px;padding-top:8px;border-top:1px solid rgba(212,160,23,0.2);">';
-                taskResults.forEach(function (task) {
-                    html += '<div style="color:var(--jade);font-size:13px;margin-top:4px;">🏆 ' + task.name + ' - ' + task.condition;
-                    if (task.reward.gold) {
-                        html += ' 💰' + task.reward.gold;
-                        GameState.addGold(task.reward.gold);
-                    }
-                    if (task.reward.cardRarity) {
-                        html += ' 🎴' + RARITY[task.reward.cardRarity].name + '卡牌';
-                    }
-                    html += '</div>';
-                });
-                html += '</div>';
+        } else if (action.type === 'skill') {
+            var skillName = action.skill ? action.skill.name : '武技';
+            text = '<span style="color:#f5e6c8;">' + actorName + '</span> 施展 <span style="color:#9b59b6;font-weight:bold;font-size:16px;">「' + skillName + '」</span>';
+            if (action.target) {
+                text += ' → <span style="color:#e74c3c;">' + action.target.name + '</span>';
             }
+            if (action.damage > 0) {
+                text += '，造成 <span style="color:#e74c3c;font-weight:bold;font-size:16px;">' + action.damage + '</span> 点伤害';
+                if (action.isCrit) text += ' <span style="color:#d4a017;font-weight:bold;">💥暴击！</span>';
+            }
+            if (action.heal > 0) {
+                text += '，回复 <span style="color:#2ecc71;font-weight:bold;font-size:16px;">' + action.heal + '</span> 点生命';
+            }
+        } else if (action.type === 'heal') {
+            text = '<span style="color:#f5e6c8;">' + actorName + '</span> 施展医术，治疗 <span style="color:#2ecc71;">' + (action.target ? action.target.name : '???') + '</span>';
+            if (action.heal > 0) {
+                text += '，回复 <span style="color:#2ecc71;font-weight:bold;font-size:16px;">' + action.heal + '</span> 点生命';
+            }
+        } else if (action.type === 'controlled') {
+            text = '<span style="color:#f5e6c8;">' + actorName + '</span> <span style="color:#9b59b6;">被定身，无法行动！</span>';
+        }
 
-            html += '</div>';
-            html += '<div class="result-actions">';
-            html += '<button class="btn-ancient" id="btn-result-confirm">确认</button>';
-            html += '</div>';
-        } else {
-            html += '<div class="result-title defeat" style="animation:defeatShake 0.5s ease;">战败...</div>';
-            html += '<div class="result-rewards">';
-            html += '<div style="color:var(--cyan-gray);line-height:1.8;">胜败乃兵家常事<br>调整编队再战</div>';
-            html += '</div>';
-            html += '<div class="result-actions">';
-            html += '<button class="btn-ancient" id="btn-result-retry">重新挑战</button>';
-            html += '<button class="btn-ancient" id="btn-result-formation" style="background:linear-gradient(180deg,#2c2c4a,#1a1a2e);border-color:var(--border-ancient);">调整编队</button>';
-            html += '</div>';
+        if (text) {
+            el.innerHTML = text;
+        }
+    },
+
+    logAction: function(action) {
+        var log = document.getElementById('battle-log');
+        if (!log) return;
+
+        var logText = '';
+        var actorName = action.actor ? action.actor.name : '???';
+
+        if (action.type === 'normal_attack') {
+            if (action.dodged) {
+                logText = actorName + ' 攻击 → ' + (action.target ? action.target.name : '???') + ' 闪避！';
+            } else {
+                logText = actorName + ' 攻击 ' + (action.target ? action.target.name : '???') + ' -' + action.damage;
+                if (action.isCrit) logText += ' 暴击';
+            }
+        } else if (action.type === 'skill') {
+            logText = actorName + ' 「' + (action.skill ? action.skill.name : '武技') + '」';
+            if (action.damage > 0) logText += ' -' + action.damage;
+            if (action.heal > 0) logText += ' +' + action.heal + 'HP';
+        } else if (action.type === 'heal') {
+            logText = actorName + ' 治疗 ' + (action.target ? action.target.name : '???') + ' +' + action.heal + 'HP';
+        } else if (action.type === 'controlled') {
+            logText = actorName + ' 定身';
+        }
+
+        if (!logText) return;
+
+        var entry = document.createElement('div');
+        entry.style.cssText = 'padding:1px 0;border-bottom:1px solid rgba(255,255,255,0.03);';
+        entry.textContent = logText;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+
+        while (log.children.length > 50) {
+            log.removeChild(log.firstChild);
+        }
+    },
+
+    onBattleEnd: function(result) {
+        this.showActionText(result.winner === 'player' ? '🎉 大获全胜！' : '💀 战败...');
+        this.showResult(result);
+    },
+
+    showResult: function(result) {
+        var stageId = this.battleEngine._state.stageId;
+        var isVictory = result.winner === 'player';
+
+        if (this.overlay) {
+            this.overlay.remove();
+            this.overlay = null;
         }
 
         var overlay = document.createElement('div');
-        overlay.className = 'battle-result-overlay';
-        overlay.innerHTML = '<div class="battle-result">' + html + '</div>';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:3000;padding:20px;box-sizing:border-box;';
+
+        var html = '<div style="text-align:center;max-width:600px;width:100%;background:linear-gradient(180deg,#2a1a10,#1a0a05);border:2px solid ' + (isVictory ? '#d4a017' : '#e74c3c') + ';border-radius:16px;padding:32px;max-height:90vh;overflow-y:auto;">';
+
+        html += '<h2 style="color:' + (isVictory ? '#d4a017' : '#e74c3c') + ';font-size:32px;margin-bottom:16px;">' + (isVictory ? '大获全胜！' : '战败...') + '</h2>';
+
+        html += '<div style="color:#8b9dab;margin-bottom:16px;">';
+        html += '<div>战斗回合：' + result.rounds + '</div>';
+        html += '<div>存活队友：' + (result.playerSurvivors || 0) + '</div>';
+        html += '</div>';
+
+        if (result.playerUnits && result.playerUnits.length > 0) {
+            html += '<div style="margin-bottom:16px;">';
+            html += '<div style="color:#d4a017;font-size:14px;margin-bottom:8px;">📊 我方战斗数据</div>';
+            for (var i = 0; i < result.playerUnits.length; i++) {
+                var unit = result.playerUnits[i];
+                var classData = CLASSES[unit.classId];
+                var hpPct = unit.maxHp > 0 ? Math.round((unit.currentHp / unit.maxHp) * 100) : 0;
+                var hpColor = hpPct > 60 ? '#2ecc71' : (hpPct > 30 ? '#d4a017' : '#e74c3c');
+                var imageUrl = getUnitImageUrl(unit);
+
+                html += '<div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;margin-bottom:6px;text-align:left;display:flex;align-items:center;gap:8px;">';
+
+                if (imageUrl) {
+                    html += '<img src="' + imageUrl + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #d4a017;" onerror="this.style.display=\'none\'">';
+                }
+
+                html += '<div style="flex:1;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                html += '<span style="color:#f5e6c8;font-size:13px;">' + (classData ? classData.icon : '') + ' ' + unit.name + '</span>';
+                html += '<span style="color:' + hpColor + ';font-size:12px;">' + (unit.alive ? '✅' : '❌') + ' ' + hpPct + '%</span>';
+                html += '</div>';
+                html += '<div style="display:flex;gap:12px;font-size:11px;margin-top:4px;">';
+                html += '<span style="color:#e74c3c;">⚔ 造成伤害 ' + (unit.damageDealt || 0) + '</span>';
+                html += '<span style="color:#e74c3c;">🛡 承受伤害 ' + (unit.damageTaken || 0) + '</span>';
+                if (unit.healDone > 0) {
+                    html += '<span style="color:#2ecc71;">💚 治疗 ' + unit.healDone + '</span>';
+                }
+                if (unit.healReceived > 0) {
+                    html += '<span style="color:#2ecc71;">❤ 受疗 ' + unit.healReceived + '</span>';
+                }
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        if (isVictory && stageId) {
+            var reward = GameState.clearStage(stageId);
+            if (reward) {
+                html += '<div style="color:#d4a017;margin-bottom:16px;">';
+                html += '<div>💰 获得 ' + reward.gold + ' 金币</div>';
+                if (reward.isFirstClear) {
+                    html += '<div style="color:#2ecc71;">🎉 首次通关额外奖励：💰 ' + reward.firstClearGold + '</div>';
+                }
+                html += '</div>';
+            }
+        }
+
+        html += '<button class="btn-ancient" id="battle-result-btn" style="padding:12px 32px;font-size:16px;">' + (isVictory ? '确认' : '返回') + '</button>';
+        html += '</div>';
+
+        overlay.innerHTML = html;
         document.body.appendChild(overlay);
 
-        setTimeout(function () {
-            var confirmBtn = document.getElementById('btn-result-confirm');
-            if (confirmBtn) {
-                confirmBtn.addEventListener('click', function () {
-                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                    switchPage('stages');
-                    updateStatusBar();
-                });
-            }
-
-            var retryBtn = document.getElementById('btn-result-retry');
-            if (retryBtn) {
-                retryBtn.addEventListener('click', function () {
-                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                    startBattle(stageId);
-                });
-            }
-
-            var formationBtn = document.getElementById('btn-result-formation');
-            if (formationBtn) {
-                formationBtn.addEventListener('click', function () {
-                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                    switchPage('formation');
-                });
+        setTimeout(function() {
+            var btn = document.getElementById('battle-result-btn');
+            if (btn) {
+                btn.onclick = function() {
+                    overlay.remove();
+                    if (window.switchPage) window.switchPage('stages');
+                    if (window.updateStatusBar) window.updateStatusBar();
+                    if (window.renderStagesPage) window.renderStagesPage();
+                };
             }
         }, 50);
-    };
+    },
 
-    window.checkTaskCard = function (stageId, result) {
-        var stage = LEVELS.find(function (s) { return s.id === stageId; });
-        if (!stage || !stage.taskCardId) return [];
-
-        var taskCard = TASK_CARDS.find(function (t) { return t.id === stage.taskCardId; });
-        if (!taskCard) return [];
-
-        var satisfied = false;
-
-        switch (taskCard.conditionType) {
-            case 'turns':
-                satisfied = result.rounds <= taskCard.conditionValue;
-                break;
-            case 'no_death':
-                var playerUnits = result.playerUnits || [];
-                if (playerUnits.length === 0) {
-                    satisfied = false;
-                } else {
-                    satisfied = true;
-                    for (var i = 0; i < playerUnits.length; i++) {
-                        if (playerUnits[i].alive === false) { satisfied = false; break; }
-                    }
-                }
-                break;
-            case 'power_lower':
-                satisfied = true;
-                break;
-            case 'elements_count':
-                var formation = GameState.getFormation();
-                var elements = [];
-                if (formation.slots) {
-                    for (var j = 0; j < formation.slots.length; j++) {
-                        var heroId = formation.slots[j];
-                        if (heroId) {
-                            var cardData = CHARACTER_CARDS.find(function (c) { return c.id === heroId; });
-                            if (cardData && elements.indexOf(cardData.element) === -1) {
-                                elements.push(cardData.element);
-                            }
-                        }
-                    }
-                }
-                satisfied = elements.length >= taskCard.conditionValue;
-                break;
-            case 'hp_above':
-                var pUnits = result.playerUnits || [];
-                if (pUnits.length === 0) {
-                    satisfied = false;
-                } else {
-                    satisfied = true;
-                    for (var k = 0; k < pUnits.length; k++) {
-                        if (!pUnits[k].alive || pUnits[k].currentHp <= pUnits[k].maxHp * taskCard.conditionValue) {
-                            satisfied = false;
-                            break;
-                        }
-                    }
-                }
-                break;
+    toggleSpeed: function() {
+        var currentSpeed = this.battleEngine._speed;
+        if (currentSpeed === 500) {
+            this.battleEngine.setSpeed(100);
+        } else if (currentSpeed === 100) {
+            this.battleEngine.setSpeed(10);
+        } else {
+            this.battleEngine.setSpeed(500);
         }
+    },
 
-        return satisfied ? [taskCard] : [];
-    };
-
-    window.addBattleLog = function (message, type) {
-        var logEl = document.getElementById('battle-log');
-        if (!logEl) return;
-
-        var entry = document.createElement('div');
-        entry.className = 'log-entry';
-
-        var typeColors = {
-            attack: 'var(--vermilion)',
-            heal: 'var(--jade)',
-            control: 'var(--azure)',
-            skill: 'var(--gold)'
-        };
-
-        entry.style.borderLeft = '3px solid ' + (typeColors[type] || typeColors.attack);
-        entry.style.paddingLeft = '6px';
-        entry.innerHTML = message;
-        logEl.appendChild(entry);
-        logEl.scrollTop = logEl.scrollHeight;
-    };
-
-    function bindBattleEvents() {
-        var backBtn = document.getElementById('btn-battle-back');
-        if (backBtn) {
-            backBtn.addEventListener('click', function () {
-                showModal(
-                    '撤退',
-                    '<div class="confirm-dialog"><p class="confirm-message">确定要撤退吗？<br>本次战斗进度将不会保存。</p></div>',
-                    function () {
-                        _battleEnded = true;
-                        BattleEngine.skip();
-                        switchPage('stages');
-                    }
-                );
-            });
-        }
-
-        var speedBtn = document.getElementById('btn-battle-speed');
-        if (speedBtn) {
-            speedBtn.addEventListener('click', function () {
-                _isSpedUp = !_isSpedUp;
-                if (_isSpedUp) {
-                    BattleEngine.setSpeed(200);
-                    speedBtn.textContent = '正常';
-                } else {
-                    BattleEngine.setSpeed(500);
-                    speedBtn.textContent = '加速';
-                }
-            });
-        }
-
-        var skipBtn = document.getElementById('btn-battle-skip');
-        if (skipBtn) {
-            skipBtn.addEventListener('click', function () {
-                BattleEngine.skip();
-            });
-        }
+    skipBattle: function() {
+        this.battleEngine.skip();
     }
+};
 
-    bindBattleEvents();
+window.BattleUI = BattleUI;
 
-})();
+window.startBattle = function(stageId) {
+    try {
+        var stage = LEVELS.find(function(s) { return s.id === stageId; });
+        if (!stage) {
+            window.showToast('未找到关卡数据');
+            return;
+        }
+        var formation = GameState.state.formation;
+        if (!formation || !formation.slots) {
+            window.showToast('编队数据异常');
+            return;
+        }
+        var enemyTeam = stage.enemies;
+        if (!enemyTeam || enemyTeam.length === 0) {
+            window.showToast('敌方阵容为空');
+            return;
+        }
+        BattleUI.startBattle(formation, enemyTeam, stageId);
+    } catch (e) {
+        console.error('startBattle error:', e);
+        window.showToast('战斗启动失败：' + e.message);
+    }
+};

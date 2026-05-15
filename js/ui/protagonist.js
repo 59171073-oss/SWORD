@@ -13,9 +13,9 @@
         { key: 'skill4', label: '秘籍四', icon: '📖' }
     ];
 
-    var STAT_LABELS = { hp: '生命', atk: '攻击', def: '防御', spd: '速度' };
-    var STAT_COLORS = { hp: '#e74c3c', atk: '#e67e22', def: '#3498db', spd: '#2ecc71' };
-    var STAT_ICONS = { hp: '❤️', atk: '⚔️', def: '🛡️', spd: '💨' };
+    var STAT_LABELS = { hp: '生命', atk: '攻击', def: '防御', agi: '身法' };
+    var STAT_COLORS = { hp: '#e74c3c', atk: '#e67e22', def: '#3498db', agi: '#9b59b6' };
+    var STAT_ICONS = { hp: '❤️', atk: '⚔️', def: '🛡️', agi: '💨' };
 
     function renderProtagonist() {
         var stats = GameState.getProtagonistStats();
@@ -138,17 +138,20 @@
     }
 
     function showProtagonistEquipSelector(slotType) {
-        var allEquips = GameState.getCollectionByType('equip');
-        var available = allEquips.filter(function (e) {
-            if (e.type !== 'equip') return false;
-            var equipData = EQUIPMENT_CARDS.find(function (eq) { return eq.id === e.id; });
-            if (!equipData) return false;
-            var matchType = slotType === 'accessory1' || slotType === 'accessory2' ? 'accessory' : slotType;
-            if (equipData.type !== matchType) return false;
-            if (isEquipUsedByFormation(e.id)) return false;
-            if (isEquipUsedByProtagonistOtherSlot(e.id, slotType)) return false;
-            return true;
-        });
+        var matchType = slotType === 'accessory1' || slotType === 'accessory2' ? 'accessory' : slotType;
+        var collection = GameState.state.collection;
+        var allEquips = [];
+        for (var id in collection) {
+            var entry = collection[id];
+            if (entry.type === 'weapon' || entry.type === 'armor' || entry.type === 'accessory') {
+                var equipData = EQUIPMENT_CARDS.find(function (eq) { return eq.id === entry.id; });
+                if (equipData && equipData.type === matchType) {
+                    if (!isEquipUsedByFormation(entry.id) && !isEquipUsedByProtagonistOtherSlot(entry.id, slotType)) {
+                        allEquips.push(entry);
+                    }
+                }
+            }
+        }
 
         var slotLabel = '';
         EQUIP_SLOT_CONFIG.forEach(function (cfg) {
@@ -156,7 +159,7 @@
         });
 
         var listHtml = '<div style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow-y:auto;">';
-        available.forEach(function (e) {
+        allEquips.forEach(function (e) {
             var equipData = EQUIPMENT_CARDS.find(function (eq) { return eq.id === e.id; });
             if (!equipData) return;
             var rarityCls = 'rarity-' + e.rarity.toLowerCase();
@@ -178,24 +181,21 @@
         });
         listHtml += '</div>';
 
-        if (available.length === 0) {
+        if (allEquips.length === 0) {
             listHtml = '<div class="empty-state" style="padding:24px;">暂无可用' + slotLabel + '，前往酒馆抽卡获取</div>';
         }
 
-        var html =
-            '<div class="modal-title">选择' + slotLabel + '</div>' +
-            '<button class="modal-close" onclick="window._hideFormationModal()">✕</button>' +
-            listHtml;
+        var html = listHtml;
 
-        showModal(html);
+        window.showModal('选择' + slotLabel, html, null);
 
         setTimeout(function () {
             document.querySelectorAll('.equip-select-card').forEach(function (card) {
                 card.onclick = function () {
                     var equipId = card.getAttribute('data-equip-id');
                     GameState.equipProtagonistItem(slotType, equipId);
-                    hideModal();
-                    showToast('已装备到少侠');
+                    window.hideModal();
+                    window.showToast('已装备到少侠');
                     renderProtagonist();
                 };
             });
@@ -245,20 +245,17 @@
             listHtml = '<div class="empty-state" style="padding:24px;">暂无可用秘籍</div>';
         }
 
-        var html =
-            '<div class="modal-title">选择武林秘籍</div>' +
-            '<button class="modal-close" onclick="window._hideFormationModal()">✕</button>' +
-            listHtml;
+        var html = listHtml;
 
-        showModal(html);
+        window.showModal('选择武林秘籍', html, null);
 
         setTimeout(function () {
             document.querySelectorAll('.skill-select-card').forEach(function (card) {
                 card.onclick = function () {
                     var skillId = card.getAttribute('data-skill-id');
                     GameState.equipProtagonistSkill(slotType, skillId);
-                    hideModal();
-                    showToast('秘籍已装备到少侠');
+                    window.hideModal();
+                    window.showToast('秘籍已装备到少侠');
                     renderProtagonist();
                 };
             });
@@ -307,32 +304,6 @@
             if (p.skills[slot] === skillId) return true;
         }
         return false;
-    }
-
-    function showModal(html) {
-        var overlay = document.getElementById('modal-overlay');
-        var content = document.getElementById('modal-content');
-        content.innerHTML = html;
-        overlay.style.display = 'flex';
-        overlay.onclick = function (e) {
-            if (e.target === overlay) hideModal();
-        };
-    }
-
-    function hideModal() {
-        var overlay = document.getElementById('modal-overlay');
-        overlay.style.display = 'none';
-        document.getElementById('modal-content').innerHTML = '';
-    }
-
-    function showToast(msg) {
-        var existing = document.querySelector('.toast');
-        if (existing) existing.remove();
-        var toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = msg;
-        document.getElementById('app').appendChild(toast);
-        setTimeout(function () { if (toast.parentNode) toast.remove(); }, 2500);
     }
 
     window.renderProtagonist = renderProtagonist;

@@ -14,6 +14,46 @@ const GameState = {
                 };
                 this.save();
             }
+            if (!this.state.stageProgress) {
+                this.state.stageProgress = {
+                    currentChapter: 1,
+                    currentStage: 1,
+                    cleared: {}
+                };
+                this.save();
+            }
+            if (!this.state.stageProgress.cleared) {
+                this.state.stageProgress.cleared = {};
+                this.save();
+            }
+            if (!this.state.firstClearBonus) {
+                this.state.firstClearBonus = {};
+                this.save();
+            }
+            if (!this.state.formation) {
+                this.state.formation = {
+                    slots: [null, null, null, null, null],
+                    equips: {},
+                    skills: {}
+                };
+                this.save();
+            }
+            if (!this.state.formation.slots) {
+                this.state.formation.slots = [null, null, null, null, null];
+                this.save();
+            }
+            if (!this.state.formation.equips) {
+                this.state.formation.equips = {};
+                this.save();
+            }
+            if (!this.state.formation.skills) {
+                this.state.formation.skills = {};
+                this.save();
+            }
+            if (!this.state.collection) {
+                this.state.collection = {};
+                this.save();
+            }
             if (this.state.firstGachaUsed === undefined) {
                 this.state.firstGachaUsed = false;
                 this.save();
@@ -56,7 +96,7 @@ const GameState = {
 
     newGame() {
         this.state = {
-            gold: 1000,
+            gold: 2000,
             collection: {},
             formation: {
                 slots: [null, null, null, null, null],
@@ -102,19 +142,8 @@ const GameState = {
 
     addCard(cardId, type, rarity) {
         const existing = this.state.collection[cardId];
-        var maxLevel;
-        if (type === 'hero') {
-            maxLevel = 20;
-        } else if (type === 'skill') {
-            maxLevel = 10;
-        } else {
-            maxLevel = 5;
-        }
         if (existing && existing.rarity === rarity) {
             existing.count += 1;
-            if (existing.level < maxLevel) {
-                existing.level += 1;
-            }
         } else {
             this.state.collection[cardId] = {
                 id: cardId,
@@ -125,6 +154,33 @@ const GameState = {
             };
         }
         this.save();
+    },
+
+    upgradeCard(cardId) {
+        const entry = this.state.collection[cardId];
+        if (!entry || entry.count <= 1) return false;
+        
+        var maxLevel;
+        if (entry.type === 'hero') {
+            maxLevel = 20;
+        } else if (entry.type === 'skill') {
+            maxLevel = 10;
+        } else {
+            maxLevel = 5;
+        }
+        
+        if (entry.level >= maxLevel) return false;
+        
+        entry.count -= 1;
+        entry.level += 1;
+        this.save();
+        return true;
+    },
+    
+    getCardMaxLevel(type) {
+        if (type === 'hero') return 20;
+        if (type === 'skill') return 10;
+        return 5;
     },
 
     getHeroStats(heroInstanceId, formationContext) {
@@ -148,7 +204,7 @@ const GameState = {
             statsWithLevel[stat] = Math.floor(baseStats[stat] * (1 + (heroEntry.level - 1) * 0.15));
         }
 
-        const equipBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const equipBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         const formation = formationContext || this.state.formation;
         if (formation.equips && formation.equips[heroInstanceId]) {
             const heroEquips = formation.equips[heroInstanceId];
@@ -169,7 +225,7 @@ const GameState = {
             }
         }
 
-        const synergyBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const synergyBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         if (formation.slots) {
             const teamElements = formation.slots
                 .filter(id => id !== null)
@@ -188,13 +244,34 @@ const GameState = {
             }
         }
 
+        const skillBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
+        if (formation.skills && formation.skills[heroInstanceId]) {
+            const heroSkills = formation.skills[heroInstanceId];
+            for (const slot in heroSkills) {
+                const skillId = heroSkills[slot];
+                if (skillId) {
+                    const skillData = SKILL_CARDS.find(s => s.id === skillId);
+                    if (skillData && skillData.effects) {
+                        skillData.effects.forEach(function(effect) {
+                            if (effect.type === 'stat_buff' && effect.stat && effect.target === 'self') {
+                                skillBonus[effect.stat] += effect.value;
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
         const finalStats = {};
         for (const stat in statsWithLevel) {
-            finalStats[stat] = statsWithLevel[stat] + equipBonus[stat] + synergyBonus[stat];
+            finalStats[stat] = statsWithLevel[stat] + equipBonus[stat] + synergyBonus[stat] + skillBonus[stat];
         }
 
         return {
-            ...finalStats,
+            hp: finalStats.hp,
+            atk: finalStats.atk,
+            def: finalStats.def,
+            agi: finalStats.agi,
             element: cardData.element,
             classId: cardData.classId,
             rarity: heroEntry.rarity,
@@ -260,6 +337,29 @@ const GameState = {
         return reward;
     },
 
+    quickClearStage(stageId) {
+        const stage = LEVELS.find(s => s.id === stageId);
+        if (!stage) return null;
+
+        const isCleared = !!this.state.stageProgress.cleared[stageId];
+        if (!isCleared) return { success: false, message: '该关卡尚未通关，无法快速通关' };
+
+        const reward = {
+            gold: stage.baseReward,
+            isFirstClear: false,
+            firstClearGold: 0
+        };
+
+        this.addGold(reward.gold);
+
+        this.save();
+        return {
+            success: true,
+            reward: reward,
+            stage: stage
+        };
+    },
+
     isStageUnlocked(stageId) {
         const stageIndex = LEVELS.findIndex(s => s.id === stageId);
         if (stageIndex === -1) return false;
@@ -283,14 +383,14 @@ const GameState = {
             if (heroId) {
                 const stats = this.getHeroStats(heroId, formation);
                 if (stats) {
-                    totalPower += stats.hp + stats.atk + stats.def + stats.spd;
+                    totalPower += stats.hp + stats.atk + stats.def + stats.agi;
                 }
             }
         });
 
         const protStats = this.getProtagonistStats();
         if (protStats) {
-            totalPower += protStats.hp + protStats.atk + protStats.def + protStats.spd;
+            totalPower += protStats.hp + protStats.atk + protStats.def + protStats.agi;
         }
 
         return totalPower;
@@ -305,10 +405,10 @@ const GameState = {
             hp: Math.floor(base.hp * levelMultiplier),
             atk: Math.floor(base.atk * levelMultiplier),
             def: Math.floor(base.def * levelMultiplier),
-            spd: Math.floor(base.spd * levelMultiplier)
+            agi: Math.floor(base.agi * levelMultiplier)
         };
 
-        const equipBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const equipBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         if (p.equips) {
             for (const slot in p.equips) {
                 const equipId = p.equips[slot];
@@ -327,14 +427,19 @@ const GameState = {
             }
         }
 
-        const skillBonus = { hp: 0, atk: 0, def: 0, spd: 0 };
+        const skillBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
         if (p.skills) {
             for (const slot in p.skills) {
                 const skillId = p.skills[slot];
                 if (skillId) {
                     const skillData = SKILL_CARDS.find(s => s.id === skillId);
-                    if (skillData && skillData.name === '吐纳心法') {
-                        skillBonus.spd += 10;
+                    if (skillData) {
+                        const effects = skillData.effects || [];
+                        effects.forEach(function(effect) {
+                            if (effect.type === 'stat_buff' && effect.stat === 'agi') {
+                                skillBonus.agi += effect.value;
+                            }
+                        });
                     }
                 }
             }
@@ -346,7 +451,10 @@ const GameState = {
         }
 
         return {
-            ...finalStats,
+            hp: finalStats.hp,
+            atk: finalStats.atk,
+            def: finalStats.def,
+            agi: finalStats.agi,
             element: PROTAGONIST.element,
             classId: 'JIANKE',
             name: PROTAGONIST.name,

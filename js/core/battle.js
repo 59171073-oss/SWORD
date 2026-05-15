@@ -62,6 +62,22 @@ var SkillEffectProcessor = {
             return actualHeal;
         }
         return 0;
+    },
+
+    checkDodge: function(defender) {
+        var dodgeChance = Math.min(defender.agi / 500, 0.4);
+        return Math.random() < dodgeChance;
+    },
+
+    checkCrit: function(attacker) {
+        var critChance = 0.1;
+        if (attacker.critChance) {
+            critChance += attacker.critChance;
+        }
+        if (attacker.agi > 120) {
+            critChance += 0.1;
+        }
+        return Math.random() < critChance;
     }
 };
 
@@ -82,7 +98,8 @@ var BattleEngine = {
             units: [],
             actionOrder: [],
             ended: false,
-            winner: null
+            winner: null,
+            unitStats: {}
         };
         this._onAction = onAction;
         this._onEnd = onEnd;
@@ -104,8 +121,9 @@ var BattleEngine = {
                 if (!stats) return;
 
                 uid++;
+                var unitId = 'p' + uid;
                 var unit = {
-                    id: 'p' + uid,
+                    id: unitId,
                     heroId: heroId,
                     name: stats.name,
                     side: 'player',
@@ -117,12 +135,28 @@ var BattleEngine = {
                     currentHp: stats.hp,
                     atk: stats.atk,
                     def: stats.def,
-                    spd: stats.spd,
+                    agi: stats.agi,
                     skills: [],
                     shield: 0,
                     controlled: 0,
-                    alive: true
+                    alive: true,
+                    critChance: 0
                 };
+                self._state.unitStats[unitId] = { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
+
+                var cardData = CHARACTER_CARDS.find(function(c) { return c.id === heroId; });
+                if (cardData && cardData.innateSkill && cardData.innateSkill.passiveEffect) {
+                    if (cardData.innateSkill.passiveEffect.type === 'crit_chance') {
+                        unit.critChance = cardData.innateSkill.passiveEffect.value;
+                    }
+                }
+
+                if (cardData && cardData.innateSkill && cardData.innateSkill.effect) {
+                    var innateEffect = cardData.innateSkill.effect;
+                    if (innateEffect.type === 'stat_boost' && innateEffect.stat) {
+                        unit[innateEffect.stat] = (unit[innateEffect.stat] || 0) + innateEffect.value;
+                    }
+                }
 
                 if (playerFormation.skills && playerFormation.skills[heroId]) {
                     var heroSkills = playerFormation.skills[heroId];
@@ -144,8 +178,9 @@ var BattleEngine = {
         var protStats = GameState.getProtagonistStats();
         if (protStats) {
             uid++;
+            var protUnitId = 'p_protagonist';
             var protUnit = {
-                id: 'p_protagonist',
+                id: protUnitId,
                 heroId: 'protagonist',
                 name: protStats.name,
                 side: 'player',
@@ -157,13 +192,28 @@ var BattleEngine = {
                 currentHp: protStats.hp,
                 atk: protStats.atk,
                 def: protStats.def,
-                spd: protStats.spd,
+                agi: protStats.agi,
                 skills: [],
                 shield: 0,
                 controlled: 0,
                 alive: true,
-                isProtagonist: true
+                isProtagonist: true,
+                critChance: 0.15
             };
+            self._state.unitStats[protUnitId] = { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
+
+            if (PROTAGONIST.innateSkill && PROTAGONIST.innateSkill.passiveEffect) {
+                if (PROTAGONIST.innateSkill.passiveEffect.type === 'crit_chance') {
+                    protUnit.critChance = PROTAGONIST.innateSkill.passiveEffect.value;
+                }
+            }
+
+            if (PROTAGONIST.innateSkill && PROTAGONIST.innateSkill.effect) {
+                var innateEffect = PROTAGONIST.innateSkill.effect;
+                if (innateEffect.type === 'stat_boost' && innateEffect.stat) {
+                    protUnit[innateEffect.stat] = (protUnit[innateEffect.stat] || 0) + innateEffect.value;
+                }
+            }
 
             var prot = GameState.state.protagonist;
             if (prot.skills) {
@@ -184,8 +234,9 @@ var BattleEngine = {
         if (enemyTeam) {
             enemyTeam.forEach(function(enemy) {
                 uid++;
+                var enemyUnitId = 'e' + uid;
                 var unit = {
-                    id: 'e' + uid,
+                    id: enemyUnitId,
                     heroId: null,
                     name: enemy.name,
                     side: 'enemy',
@@ -197,18 +248,20 @@ var BattleEngine = {
                     currentHp: enemy.stats.hp,
                     atk: enemy.stats.atk,
                     def: enemy.stats.def,
-                    spd: enemy.stats.spd,
+                    agi: enemy.stats.agi || enemy.stats.spd || 50,
                     skills: [],
                     shield: 0,
                     controlled: 0,
-                    alive: true
+                    alive: true,
+                    critChance: 0
                 };
+                self._state.unitStats[enemyUnitId] = { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
                 self._state.units.push(unit);
             });
         }
 
         this._state.actionOrder = this._state.units.slice().sort(function(a, b) {
-            if (b.spd !== a.spd) return b.spd - a.spd;
+            if (b.agi !== a.agi) return b.agi - a.agi;
             return Math.random() - 0.5;
         });
     },
@@ -225,6 +278,26 @@ var BattleEngine = {
                 }
             });
         });
+    },
+
+    _applyTurnStartEffects: function(unit) {
+        if (!unit.alive) return;
+        var cardData = CHARACTER_CARDS.find(function(c) { return c.id === unit.heroId; });
+        
+        if (cardData && cardData.innateSkill) {
+            var innate = cardData.innateSkill;
+            if (innate.effect && innate.effect.type === 'turn_start_heal') {
+                var allies = this._state.units.filter(function(u) {
+                    return u.side === unit.side && u.alive && u.currentHp < u.maxHp;
+                });
+                if (allies.length > 0) {
+                    allies.sort(function(a, b) { return a.currentHp - b.currentHp; });
+                    var target = allies[0];
+                    var actualHeal = Math.min(innate.effect.value, target.maxHp - target.currentHp);
+                    target.currentHp += actualHeal;
+                }
+            }
+        }
     },
 
     start: function() {
@@ -245,6 +318,12 @@ var BattleEngine = {
         if (!this._running || this._state.ended) return;
         this._state.round++;
         this._actionIndex = 0;
+
+        var self = this;
+        this._state.units.forEach(function(unit) {
+            self._applyTurnStartEffects(unit);
+        });
+
         this._processNextAction();
     },
 
@@ -331,6 +410,7 @@ var BattleEngine = {
             skill: null,
             damage: 0,
             heal: 0,
+            dodged: false,
             elementModifier: 1.0,
             isCrit: false,
             results: []
@@ -339,7 +419,39 @@ var BattleEngine = {
         var self = this;
         var totalDamageDealt = 0;
 
+        var cardData = CHARACTER_CARDS.find(function(c) { return c.id === unit.heroId; });
+        var isHealer = cardData && cardData.isHealer;
+
         var activeSkill = this._selectActiveSkill(unit);
+        
+        if (!activeSkill && isHealer) {
+            var healAmount = Math.floor(unit.atk * (cardData.healMultiplier || 0.3));
+            var allies = this._state.units.filter(function(u) {
+                return u.side === unit.side && u.alive && u.currentHp < u.maxHp;
+            });
+            if (allies.length > 0) {
+                allies.sort(function(a, b) { return a.currentHp - b.currentHp; });
+                var target = allies[0];
+                var actualHeal = Math.min(healAmount, target.maxHp - target.currentHp);
+                target.currentHp += actualHeal;
+                
+                if (self._state.unitStats[unit.id]) {
+                    self._state.unitStats[unit.id].healDone += actualHeal;
+                }
+                if (self._state.unitStats[target.id]) {
+                    self._state.unitStats[target.id].healReceived += actualHeal;
+                }
+                
+                actionInfo.type = 'heal';
+                actionInfo.heal = actualHeal;
+                actionInfo.target = { id: target.id, name: target.name, side: target.side };
+                actionInfo.results.push({
+                    target: actionInfo.target,
+                    heal: actualHeal
+                });
+                return actionInfo;
+            }
+        }
 
         if (activeSkill) {
             var skill = activeSkill;
@@ -352,10 +464,26 @@ var BattleEngine = {
             if (skill.type === 'active_attack') {
                 var targets = this._getTargets(unit, targeting, false);
                 targets.forEach(function(target) {
+                    if (SkillEffectProcessor.checkDodge(target)) {
+                        actionInfo.results.push({
+                            target: { id: target.id, name: target.name, side: target.side },
+                            dodged: true
+                        });
+                        return;
+                    }
+
                     var dmgResult = self._calculateDamage(unit, target, finalMultiplier);
                     self._applyDamageToUnit(target, dmgResult.damage);
                     totalDamageDealt += dmgResult.damage;
                     actionInfo.damage += dmgResult.damage;
+                    
+                    if (self._state.unitStats[unit.id]) {
+                        self._state.unitStats[unit.id].damageDealt += dmgResult.damage;
+                    }
+                    if (self._state.unitStats[target.id]) {
+                        self._state.unitStats[target.id].damageTaken += dmgResult.damage;
+                    }
+                    
                     actionInfo.results.push({
                         target: { id: target.id, name: target.name, side: target.side },
                         damage: dmgResult.damage,
@@ -379,6 +507,14 @@ var BattleEngine = {
                     var actualHeal = Math.min(healAmount, target.maxHp - target.currentHp);
                     target.currentHp += actualHeal;
                     actionInfo.heal += actualHeal;
+                    
+                    if (self._state.unitStats[unit.id]) {
+                        self._state.unitStats[unit.id].healDone += actualHeal;
+                    }
+                    if (self._state.unitStats[target.id]) {
+                        self._state.unitStats[target.id].healReceived += actualHeal;
+                    }
+                    
                     actionInfo.results.push({
                         target: { id: target.id, name: target.name, side: target.side },
                         heal: actualHeal
@@ -412,21 +548,38 @@ var BattleEngine = {
         } else {
             var target = this._selectTarget(unit, false);
             if (target) {
-                var dmgResult = this._calculateDamage(unit, target, 1.0);
-                this._applyDamageToUnit(target, dmgResult.damage);
-                totalDamageDealt = dmgResult.damage;
-                actionInfo.target = { id: target.id, name: target.name, side: target.side };
-                actionInfo.damage = dmgResult.damage;
-                actionInfo.elementModifier = dmgResult.elementModifier;
-                actionInfo.isCrit = dmgResult.isCrit;
-                actionInfo.results.push({
-                    target: actionInfo.target,
-                    damage: dmgResult.damage,
-                    elementModifier: dmgResult.elementModifier,
-                    isCrit: dmgResult.isCrit
-                });
+                if (SkillEffectProcessor.checkDodge(target)) {
+                    actionInfo.target = { id: target.id, name: target.name, side: target.side };
+                    actionInfo.dodged = true;
+                    actionInfo.results.push({
+                        target: actionInfo.target,
+                        dodged: true
+                    });
+                } else {
+                    var dmgResult = this._calculateDamage(unit, target, 1.0);
+                    this._applyDamageToUnit(target, dmgResult.damage);
+                    totalDamageDealt = dmgResult.damage;
+                    
+                    if (self._state.unitStats[unit.id]) {
+                        self._state.unitStats[unit.id].damageDealt += dmgResult.damage;
+                    }
+                    if (self._state.unitStats[target.id]) {
+                        self._state.unitStats[target.id].damageTaken += dmgResult.damage;
+                    }
+                    
+                    actionInfo.target = { id: target.id, name: target.name, side: target.side };
+                    actionInfo.damage = dmgResult.damage;
+                    actionInfo.elementModifier = dmgResult.elementModifier;
+                    actionInfo.isCrit = dmgResult.isCrit;
+                    actionInfo.results.push({
+                        target: actionInfo.target,
+                        damage: dmgResult.damage,
+                        elementModifier: dmgResult.elementModifier,
+                        isCrit: dmgResult.isCrit
+                    });
 
-                this._applyOnDamageDealtEffects(unit, totalDamageDealt);
+                    this._applyOnDamageDealtEffects(unit, totalDamageDealt);
+                }
             }
         }
 
@@ -511,10 +664,7 @@ var BattleEngine = {
         });
         rawDamage = rawDamage - totalReduction;
 
-        var isCrit = false;
-        if (attacker.spd > 120) {
-            isCrit = Math.random() < 0.2;
-        }
+        var isCrit = SkillEffectProcessor.checkCrit(attacker);
         if (isCrit) {
             rawDamage = rawDamage * 1.5;
         }
@@ -613,8 +763,32 @@ var BattleEngine = {
 
         for (var i = 0; i < this._state.units.length; i++) {
             var u = this._state.units[i];
+            var stats = this._state.unitStats[u.id] || { damageDealt: 0, damageTaken: 0, healDone: 0, healReceived: 0 };
+            var unitWithStats = {
+                id: u.id,
+                heroId: u.heroId,
+                name: u.name,
+                side: u.side,
+                classId: u.classId,
+                element: u.element,
+                rarity: u.rarity,
+                level: u.level,
+                maxHp: u.maxHp,
+                currentHp: u.currentHp,
+                atk: u.atk,
+                def: u.def,
+                agi: u.agi,
+                shield: u.shield,
+                controlled: u.controlled,
+                alive: u.alive,
+                isProtagonist: u.isProtagonist || false,
+                damageDealt: stats.damageDealt,
+                damageTaken: stats.damageTaken,
+                healDone: stats.healDone,
+                healReceived: stats.healReceived
+            };
             if (u.side === 'player') {
-                playerUnits.push(u);
+                playerUnits.push(unitWithStats);
                 if (u.alive) playerSurvivors++;
             } else {
                 if (u.alive) enemySurvivors++;
@@ -654,6 +828,7 @@ var BattleEngine = {
             }
             unitsSnapshot.push({
                 id: u.id,
+                heroId: u.heroId || null,
                 name: u.name,
                 side: u.side,
                 classId: u.classId,
@@ -664,12 +839,13 @@ var BattleEngine = {
                 currentHp: u.currentHp,
                 atk: u.atk,
                 def: u.def,
-                spd: u.spd,
+                agi: u.agi,
                 shield: u.shield,
                 controlled: u.controlled,
                 alive: u.alive,
                 skills: skillSnapshots,
-                isProtagonist: u.isProtagonist || false
+                isProtagonist: u.isProtagonist || false,
+                critChance: u.critChance || 0
             });
         }
 
