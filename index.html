@@ -3,8 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>江湖风云录</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
+    <script>
+        // 清除Service Worker缓存
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                registrations.forEach(function(registration) {
+                    registration.unregister();
+                });
+            });
+        }
+        // 清除localStorage中的旧图片缓存
+        localStorage.removeItem('wuxia_card_game_save');
+    </script>
 </head>
 <body>
     <div id="app">
@@ -276,21 +291,21 @@
         <div id="float-text-container"></div>
     </div>
 
-    <script src="js/data/elements.js"></script>
-    <script src="js/data/classes.js"></script>
-    <script src="js/data/cards.js"></script>
-    <script src="js/data/levels.js"></script>
-    <script src="js/core/storage.js"></script>
-    <script src="js/core/state.js"></script>
-    <script src="js/core/battle.js"></script>
-    <script src="js/ui/collection.js"></script>
-    <script src="js/ui/gacha.js"></script>
-    <script src="js/ui/protagonist.js"></script>
-    <script src="js/ui/heroes.js"></script>
-    <script src="js/ui/formation.js"></script>
-    <script src="js/ui/battle-ui.js"></script>
-    <script src="js/ui/stages.js"></script>
-    <script src="js/ui/main.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/data/elements.js?v=2"></script>
+    <script src="js/data/classes.js?v=2"></script>
+    <script src="js/data/cards.js?v=2"></script>
+    <script src="js/data/levels.js?v=2"></script>
+    <script src="js/core/storage.js?v=2"></script>
+    <script src="js/core/state.js?v=2"></script>
+    <script src="js/core/battle.js?v=2"></script>
+    <script src="js/ui/collection.js?v=2"></script>
+    <script src="js/ui/gacha.js?v=2"></script>
+    <script src="js/ui/protagonist.js?v=2"></script>
+    <script src="js/ui/heroes.js?v=2"></script>
+    <script src="js/ui/formation.js?v=2"></script>
+    <script src="js/ui/battle-ui.js?v=2"></script>
+    <script src="js/ui/stages.js?v=2"></script>
+    <script src="js/ui/main.js?v=2"></script>
+    <script src="js/app.js?v=2"></script>
 </body>
 </html>
