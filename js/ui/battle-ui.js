@@ -37,7 +37,14 @@ function getUnitImageUrl(unit) {
         }
         if (unit.heroId) {
             var cardData = CHARACTER_CARDS.find(function (c) { return c.id === unit.heroId; });
-            return cardData ? (cardData.imageUrl || '') : '';
+            if (cardData) {
+                var hStar = unit.star || 1;
+                if (cardData.starImageUrls && cardData.starImageUrls[hStar - 1]) {
+                    return cardData.starImageUrls[hStar - 1];
+                }
+                return cardData.imageUrl || '';
+            }
+            return '';
         }
     }
     return getEnemyImageUrl(unit.name);

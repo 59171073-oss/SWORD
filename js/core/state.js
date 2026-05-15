@@ -282,7 +282,8 @@ const GameState = {
             classId: cardData.classId,
             rarity: heroEntry.rarity,
             level: heroEntry.level,
-            name: cardData.name
+            name: cardData.name,
+            star: heroEntry.star || 1
         };
     },
 

@@ -29,7 +29,15 @@ const CHARACTER_CARDS = [
         rarity: 'FINE',
         baseStats: { hp: 90, atk: 60, def: 60, agi: 80 },
         description: '主角的侍女，从小跟随主角，温柔体贴，擅长医术。',
-        imageUrl: 'https://robohash.org/qin_ziwei?set=set3&bgset=bg1',
+        imageUrl: 'assets/qinziwei_star1.jpg',
+        starImageUrls: [
+            'assets/qinziwei_star1.jpg',
+            'assets/qinziwei_star2.jpg',
+            'assets/qinziwei_star3.jpg',
+            'assets/qinziwei_star4.jpg',
+            'assets/qinziwei_star5.jpg',
+            'assets/qinziwei_star6.jpg'
+        ],
         isHealer: true,
         healMultiplier: 0.3,
         innateSkill: {
