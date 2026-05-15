@@ -1,232 +1,144 @@
-const CollectionUI = {
-    container: null,
-    currentFilter: 'all',
-    currentView: 'hero',
 
-    init(containerId) {
-        this.container = document.getElementById(containerId);
-        if (!this.container) return;
-        this.render();
-    },
+(function () {
+    var currentFilter = 'all';
 
-    render() {
-        if (!this.container) return;
-
-        const heroes = GameState.getCollectionByType('hero');
-        const skills = GameState.getCollectionByType('skill');
-        const equipment = GameState.getCollectionByType('weapon').concat(
-            GameState.getCollectionByType('armor'),
-            GameState.getCollectionByType('accessory')
-        );
-
-        this.container.innerHTML = `
-            <div class="collection-container">
-                <div class="collection-header">
-                    <h2>我的收藏</h2>
-                    <div class="collection-tabs">
-                        <button class="tab-btn active" data-view="hero">英雄</button>
-                        <button class="tab-btn" data-view="skill">武学</button>
-                        <button class="tab-btn" data-view="equipment">装备</button>
-                    </div>
-                    <div class="collection-filter">
-                        <select id="filter-rarity">
-                            <option value="all">全部稀有度</option>
-                            <option value="COMMON">普通</option>
-                            <option value="FINE">精良</option>
-                            <option value="RARE">稀有</option>
-                            <option value="LEGEND">传说</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="collection-grid" id="collection-grid"></div>
-            </div>
-        `;
-
-        this.bindEvents();
-        this.renderCards(heroes);
-    },
-
-    bindEvents() {
-        const tabs = this.container.querySelectorAll('.tab-btn');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                this.currentView = tab.dataset.view;
-                this.renderCards(this.getFilteredCards());
-            });
-        });
-
-        const filterSelect = document.getElementById('filter-rarity');
-        filterSelect.addEventListener('change', () => {
-            this.currentFilter = filterSelect.value;
-            this.renderCards(this.getFilteredCards());
-        });
-    },
-
-    getFilteredCards() {
-        const heroes = GameState.getCollectionByType('hero');
-        const skills = GameState.getCollectionByType('skill');
-        const equipment = GameState.getCollectionByType('weapon').concat(
-            GameState.getCollectionByType('armor'),
-            GameState.getCollectionByType('accessory')
-        );
-
-        let cards = [];
-        switch (this.currentView) {
-            case 'hero': cards = heroes; break;
-            case 'skill': cards = skills; break;
-            case 'equipment': cards = equipment; break;
-        }
-
-        if (this.currentFilter !== 'all') {
-            cards = cards.filter(c => c.rarity === this.currentFilter);
-        }
-
-        return cards;
-    },
-
-    renderCards(cards) {
-        const grid = document.getElementById('collection-grid');
+    window.renderCollectionPage = function () {
+        var grid = document.getElementById('collection-grid');
         if (!grid) return;
 
+        var filterBtns = document.querySelectorAll('.collection-filters .filter-btn');
+        for (var i = 0; i < filterBtns.length; i++) {
+            filterBtns[i].onclick = function () {
+                for (var j = 0; j < filterBtns.length; j++) {
+                    filterBtns[j].classList.remove('active');
+                }
+                this.classList.add('active');
+                currentFilter = this.getAttribute('data-filter');
+                renderCollectionGrid();
+            };
+        }
+
+        renderCollectionGrid();
+    };
+
+    function renderCollectionGrid() {
+        var grid = document.getElementById('collection-grid');
+        if (!grid) return;
+
+        var collection = GameState.state.collection;
+        var cards = [];
+
+        for (var id in collection) {
+            var entry = collection[id];
+            if (currentFilter === 'all') {
+                cards.push(entry);
+            } else if (currentFilter === 'hero' && entry.type === 'hero') {
+                cards.push(entry);
+            } else if (currentFilter === 'equip' && (entry.type === 'weapon' || entry.type === 'armor' || entry.type === 'accessory')) {
+                cards.push(entry);
+            } else if (currentFilter === 'skill' && entry.type === 'skill') {
+                cards.push(entry);
+            }
+        }
+
         if (cards.length === 0) {
-            grid.innerHTML = '<div class="empty-collection">暂无卡牌</div>';
+            grid.innerHTML = '<div style="text-align:center;color:#8b9dab;padding:40px;">暂无卡牌，去酒馆抽卡吧！</div>';
             return;
         }
 
-        grid.innerHTML = cards.map(card => {
-            let cardData, displayName;
-            const rarityData = RARITY[card.rarity];
+        var html = '';
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i];
+            var cardData = null;
+            var displayName = card.id;
+            var displayType = '';
+            var description = '';
+            var imageUrl = null;
 
-            switch (this.currentView) {
-                case 'hero':
-                    cardData = CHARACTER_CARDS.find(c => c.id === card.id);
-                    displayName = cardData ? cardData.name : card.id;
-                    break;
-                case 'skill':
-                    cardData = SKILL_CARDS.find(c => c.id === card.id);
-                    displayName = cardData ? cardData.name : card.id;
-                    break;
-                case 'equipment':
-                    cardData = EQUIPMENT_CARDS.find(c => c.id === card.id);
-                    displayName = cardData ? cardData.name : card.id;
-                    break;
-            }
-
-            const isEquipped = GameState.isCardEquipped(card.id);
-            const maxLevel = GameState.getCardMaxLevel(card.type);
-            const canUpgrade = card.count > 1 && card.level < maxLevel;
-
-            let imageUrl = '';
-            if (cardData && cardData.imageUrl) {
-                imageUrl = `<img src="${cardData.imageUrl}" alt="${displayName}" class="card-image" onerror="this.style.display='none'">`;
-            }
-
-            return `
-                <div class="collection-card rarity-${card.rarity.toLowerCase()} ${isEquipped ? 'equipped' : ''}" data-card-id="${card.id}">
-                    ${imageUrl}
-                    <div class="card-rarity">${rarityData.name}</div>
-                    <div class="card-name">${displayName}</div>
-                    <div class="card-level">Lv.${card.level}</div>
-                    <div class="card-count">x${card.count}</div>
-                    ${canUpgrade ? `<button class="upgrade-btn" data-card-id="${card.id}">升级</button>` : ''}
-                    <button class="detail-btn" data-card-id="${card.id}">详情</button>
-                </div>
-            `;
-        }).join('');
-
-        grid.querySelectorAll('.upgrade-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const cardId = btn.dataset.cardId;
-                this.upgradeCard(cardId);
-            });
-        });
-
-        grid.querySelectorAll('.detail-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const cardId = btn.dataset.cardId;
-                this.showCardDetail(cardId);
-            });
-        });
-    },
-
-    upgradeCard(cardId) {
-        const entry = GameState.state.collection[cardId];
-        if (!entry) return;
-
-        const maxLevel = GameState.getCardMaxLevel(entry.type);
-
-        if (entry.count <= 1) {
-            alert('需要至少2张同名卡牌才能升级');
-            return;
-        }
-
-        if (entry.level >= maxLevel) {
-            alert('已达到最高等级');
-            return;
-        }
-
-        if (confirm(`确定要消耗1张${entry.id}将等级从${entry.level}提升到${entry.level + 1}吗？`)) {
-            if (GameState.upgradeCard(cardId)) {
-                this.renderCards(this.getFilteredCards());
-            } else {
-                alert('升级失败');
-            }
-        }
-    },
-
-    showCardDetail(cardId) {
-        const entry = GameState.state.collection[cardId];
-        if (!entry) return;
-
-        let cardData, displayName, displayType, description;
-        const rarityData = RARITY[entry.rarity];
-
-        switch (entry.type) {
-            case 'hero':
-                cardData = CHARACTER_CARDS.find(c => c.id === card.id);
-                displayName = cardData ? cardData.name : card.id;
-                displayType = '英雄';
-                description = cardData ? cardData.description : '';
-                break;
-            case 'skill':
-                cardData = SKILL_CARDS.find(c => c.id === card.id);
-                displayName = cardData ? cardData.name : card.id;
+            if (card.type === 'hero') {
+                cardData = CHARACTER_CARDS.find(function (c) { return c.id === card.id; });
+                displayType = '侠客';
+                if (cardData) {
+                    displayName = cardData.name;
+                    description = cardData.description;
+                    imageUrl = cardData.imageUrl;
+                }
+            } else if (card.type === 'skill') {
+                cardData = SKILL_CARDS.find(function (c) { return c.id === card.id; });
                 displayType = '武学';
-                description = cardData ? cardData.description : '';
-                break;
-            case 'weapon':
-            case 'armor':
-            case 'accessory':
-                cardData = EQUIPMENT_CARDS.find(c => c.id === card.id);
-                displayName = cardData ? cardData.name : card.id;
-                displayType = '装备';
-                description = cardData ? cardData.description : '';
-                break;
+                if (cardData) {
+                    displayName = cardData.name;
+                    description = cardData.description || cardData.effect || '';
+                }
+            } else {
+                cardData = EQUIPMENT_CARDS.find(function (c) { return c.id === card.id; });
+                displayType = card.type === 'weapon' ? '武器' : (card.type === 'armor' ? '护甲' : '饰品');
+                if (cardData) {
+                    displayName = cardData.name;
+                    description = cardData.description;
+                }
+            }
+
+            var rarityData = RARITY[card.rarity];
+            var isEquipped = GameState.isCardEquipped(card.id);
+            var maxLevel = GameState.getCardMaxLevel(card.type);
+            var canUpgrade = card.count > 1 && card.level < maxLevel;
+            var canSell = card.count > 0 && !isEquipped;
+
+            html += '<div class="collection-card" style="background:linear-gradient(180deg,#2a1a10,#1a0a05);border:2px solid ' + (rarityData ? rarityData.color : '#8b9dab') + ';border-radius:12px;padding:12px;text-align:center;' + (isEquipped ? 'opacity:0.7;' : '') + '">';
+
+            if (imageUrl) {
+                html += '<img src="' + imageUrl + '" alt="' + displayName + '" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:8px;" onerror="this.style.display=\'none\'">';
+            }
+
+            html += '<div style="color:' + (rarityData ? rarityData.color : '#8b9dab') + ';font-size:12px;font-weight:bold;margin-bottom:4px;">' + (rarityData ? rarityData.name : '') + '</div>';
+            html += '<div style="color:#f5e6c8;font-size:14px;font-weight:bold;margin-bottom:4px;">' + displayName + '</div>';
+            html += '<div style="color:#8b9dab;font-size:11px;margin-bottom:4px;">' + displayType + ' · Lv.' + card.level + '</div>';
+            html += '<div style="color:#d4a017;font-size:11px;margin-bottom:8px;">x' + card.count + (isEquipped ? ' (已装备)' : '') + '</div>';
+
+            if (description) {
+                html += '<div style="color:#8b9dab;font-size:10px;line-height:1.4;margin-bottom:8px;">' + description + '</div>';
+            }
+
+            html += '<div style="display:flex;gap:6px;justify-content:center;">';
+            if (canUpgrade) {
+                html += '<button class="btn-ancient coll-upgrade-btn" data-card-id="' + card.id + '" style="padding:4px 10px;font-size:11px;">升级</button>';
+            }
+            if (canSell) {
+                html += '<button class="btn-ancient coll-sell-btn" data-card-id="' + card.id + '" style="padding:4px 10px;font-size:11px;background:linear-gradient(180deg,#3d1a1a,#2a1010);">卖出</button>';
+            }
+            html += '</div>';
+
+            html += '</div>';
         }
 
-        let detailsHtml = `<div class="card-detail-overlay" id="card-detail-overlay">
-            <div class="card-detail-modal">
-                <h3>${displayName}</h3>
-                <div class="detail-info">
-                    <p>类型: ${displayType}</p>
-                    <p>稀有度: ${rarityData.name}</p>
-                    <p>等级: ${entry.level}</p>
-                    <p>数量: ${entry.count}</p>
-                    <p class="detail-desc">${description}</p>
-                </div>
-                <button class="close-btn" onclick="document.getElementById('card-detail-overlay').remove()">关闭</button>
-            </div>
-        </div>`;
+        grid.innerHTML = html;
 
-        const existing = document.getElementById('card-detail-overlay');
-        if (existing) existing.remove();
+        var upgradeBtns = grid.querySelectorAll('.coll-upgrade-btn');
+        for (var i = 0; i < upgradeBtns.length; i++) {
+            upgradeBtns[i].onclick = function () {
+                var cardId = this.getAttribute('data-card-id');
+                if (GameState.upgradeCard(cardId)) {
+                    window.showToast('升级成功！');
+                    renderCollectionGrid();
+                } else {
+                    window.showToast('升级失败');
+                }
+            };
+        }
 
-        this.container.insertAdjacentHTML('beforeend', detailsHtml);
+        var sellBtns = grid.querySelectorAll('.coll-sell-btn');
+        for (var i = 0; i < sellBtns.length; i++) {
+            sellBtns[i].onclick = function () {
+                var cardId = this.getAttribute('data-card-id');
+                var price = GameState.getCardSellPrice(cardId);
+                if (price > 0) {
+                    GameState.sellCard(cardId);
+                    window.showToast('卖出获得 ' + price + ' 金币');
+                    renderCollectionGrid();
+                    window.updateStatusBar();
+                }
+            };
+        }
     }
-};
-
-window.CollectionUI = CollectionUI;
+})();

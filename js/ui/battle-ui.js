@@ -156,42 +156,74 @@ const BattleUI = {
     },
 
     showResult(result) {
-        const overlay = document.createElement('div');
-        overlay.className = 'battle-overlay';
+        var stageId = this.battleEngine._state.stageId;
+        var isVictory = result.winner === 'player';
 
-        const isVictory = result.winner === 'player';
-        const title = isVictory ? '胜利！' : '失败...';
+        var overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px;box-sizing:border-box;';
 
-        let unitStatsHtml = '';
-        if (isVictory && result.playerUnits) {
-            unitStatsHtml = '<div class="battle-stats-panel"><h4>战斗数据</h4>';
-            result.playerUnits.forEach(unit => {
-                unitStatsHtml += `
-                    <div class="unit-stats-row">
-                        <span class="unit-stats-name">${unit.name}</span>
-                        <div class="unit-stats-details">
-                            <span>伤害: ${unit.damageDealt || 0}</span>
-                            <span>治疗: ${unit.healDone || 0}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            unitStatsHtml += '</div>';
+        var html = '<div style="text-align:center;max-width:600px;width:100%;background:linear-gradient(180deg,#2a1a10,#1a0a05);border:2px solid ' + (isVictory ? '#d4a017' : '#e74c3c') + ';border-radius:16px;padding:32px;">';
+
+        html += '<h2 style="color:' + (isVictory ? '#d4a017' : '#e74c3c') + ';font-size:32px;margin-bottom:16px;">' + (isVictory ? '大获全胜！' : '战败...') + '</h2>';
+
+        html += '<div style="color:#8b9dab;margin-bottom:16px;">';
+        html += '<div>战斗回合：' + result.rounds + '</div>';
+        html += '<div>存活队友：' + (result.playerSurvivors || 0) + '</div>';
+        html += '</div>';
+
+        if (result.playerUnits && result.playerUnits.length > 0) {
+            html += '<div style="margin-bottom:16px;">';
+            html += '<div style="color:#d4a017;font-size:14px;margin-bottom:8px;">📊 我方战斗数据</div>';
+            for (var i = 0; i < result.playerUnits.length; i++) {
+                var unit = result.playerUnits[i];
+                var classData = CLASSES[unit.classId];
+                var hpPct = unit.maxHp > 0 ? Math.round((unit.currentHp / unit.maxHp) * 100) : 0;
+                var hpColor = hpPct > 60 ? '#2ecc71' : (hpPct > 30 ? '#d4a017' : '#e74c3c');
+
+                html += '<div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;margin-bottom:6px;text-align:left;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+                html += '<span style="color:#f5e6c8;font-size:13px;">' + (classData ? classData.icon : '') + ' ' + unit.name + '</span>';
+                html += '<span style="color:' + hpColor + ';font-size:12px;">' + (unit.alive ? '✅' : '❌') + ' ' + hpPct + '%</span>';
+                html += '</div>';
+                html += '<div style="display:flex;gap:12px;font-size:11px;margin-top:4px;">';
+                html += '<span style="color:#3498db;">⚔ 伤害 ' + (unit.damageDealt || 0) + '</span>';
+                if (unit.healDone > 0) {
+                    html += '<span style="color:#2ecc71;">💚 治疗 ' + unit.healDone + '</span>';
+                }
+                html += '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
         }
 
-        overlay.innerHTML = `
-            <div class="battle-result">
-                <h2 class="result-title ${isVictory ? 'victory' : 'defeat'}">${title}</h2>
-                <div class="result-info">
-                    <p>存活队友: ${result.playerSurvivors}</p>
-                    <p>战斗回合: ${result.rounds}</p>
-                </div>
-                ${unitStatsHtml}
-                <button class="result-btn" onclick="this.closest('.battle-overlay').remove(); UIManager.closePanel();">返回</button>
-            </div>
-        `;
+        if (isVictory && stageId) {
+            var reward = GameState.clearStage(stageId);
+            if (reward) {
+                html += '<div style="color:#d4a017;margin-bottom:16px;">';
+                html += '<div>💰 获得 ' + reward.gold + ' 金币</div>';
+                if (reward.isFirstClear) {
+                    html += '<div style="color:#2ecc71;">🎉 首次通关额外奖励：💰 ' + reward.firstClearGold + '</div>';
+                }
+                html += '</div>';
+            }
+        }
 
-        this.container.appendChild(overlay);
+        html += '<button class="btn-ancient" id="battle-result-btn" style="padding:12px 32px;font-size:16px;">' + (isVictory ? '确认' : '返回') + '</button>';
+        html += '</div>';
+
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+
+        setTimeout(function () {
+            var btn = document.getElementById('battle-result-btn');
+            if (btn) {
+                btn.onclick = function () {
+                    overlay.remove();
+                    if (window.switchPage) window.switchPage('stages');
+                    if (window.updateStatusBar) window.updateStatusBar();
+                };
+            }
+        }, 50);
     },
 
     toggleSpeed() {
@@ -211,3 +243,13 @@ const BattleUI = {
 };
 
 window.BattleUI = BattleUI;
+
+window.startBattle = function (stageId) {
+    var stage = LEVELS.find(function (s) { return s.id === stageId; });
+    if (!stage) return;
+
+    var formation = GameState.state.formation;
+    var enemyTeam = stage.enemies;
+
+    BattleUI.startBattle(formation, enemyTeam, stageId);
+};
