@@ -42,7 +42,7 @@
 
             html += '<div class="card-rarity" style="color:' + rarityColor + ';font-size:12px;font-weight:bold;text-align:center;margin-bottom:4px;">' + (rarityData ? rarityData.name : '') + '</div>';
             html += '<div class="card-name" style="color:#f5e6c8;font-size:16px;font-weight:bold;text-align:center;margin-bottom:4px;">' + (cardData ? cardData.name : hero.id) + '</div>';
-            html += '<div class="card-level" style="color:#8b9dab;font-size:12px;text-align:center;">Lv.' + hero.level + '</div>';
+            html += '<div class="card-level" style="color:#8b9dab;font-size:12px;text-align:center;">Lv.' + hero.level + ' · ⭐' + (hero.star || 1) + '</div>';
 
             html += '</div>';
         }
@@ -108,13 +108,34 @@
         html += '<div>';
         html += '<div style="font-size:28px;font-weight:bold;color:#f5e6c8;margin-bottom:4px;">' + cardData.name + '</div>';
         html += '<div style="display:flex;gap:12px;color:#8b9dab;font-size:14px;">';
-        html += '<span style="color:' + rarityData.color + ';">' + rarityData.name + '</span>';
-        html += '<span>' + (classData ? classData.name : '未知') + '</span>';
-        html += '<span>Lv.' + heroEntry.level + '</span>';
-        html += '<span>' + cardData.element + '属性</span>';
-        html += '</div>';
-        html += '</div>';
-        html += '</div>';
+            html += '<span style="color:' + rarityData.color + ';">' + rarityData.name + '</span>';
+            html += '<span>' + (classData ? classData.name : '未知') + '</span>';
+            html += '<span>Lv.' + heroEntry.level + '</span>';
+            html += '<span>' + cardData.element + '属性</span>';
+            html += '<span>⭐' + (heroEntry.star || 1) + '</span>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+
+            var currentStar = heroEntry.star || 1;
+            var canStarUp = GameState.canUpgradeStar(heroId);
+            var requiredLevel = currentStar * 10;
+            var cost = GameState.getStarUpgradeCost(currentStar);
+            html += '<div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;margin-bottom:16px;">';
+            html += '<div style="color:#d4a017;font-size:14px;font-weight:bold;margin-bottom:8px;">⭐ 升星</div>';
+            html += '<div style="color:#8b9dab;font-size:12px;margin-bottom:8px;">当前 ' + currentStar + ' 星 / 最高 6 星 · 每10级可升1星</div>';
+            if (currentStar >= 6) {
+                html += '<div style="color:#f1c40f;font-size:13px;text-align:center;">✨ 已满星</div>';
+            } else {
+                html += '<div style="color:#8b9dab;font-size:12px;margin-bottom:8px;">需求：等级 ≥ Lv.' + requiredLevel + ' · 同名卡 ×' + cost.cardCount + ' · ' + cost.gold + ' 金币</div>';
+                html += '<div style="color:#8b9dab;font-size:12px;margin-bottom:8px;">拥有：同名卡 ×' + heroEntry.count + ' · 金币 ' + GameState.state.gold + '</div>';
+                if (canStarUp) {
+                    html += '<button id="hero-star-up-btn" style="width:100%;padding:8px;border-radius:6px;background:linear-gradient(180deg,#d4a017,#b8860b);border:none;color:#fff;font-size:14px;cursor:pointer;font-weight:bold;">升星</button>';
+                } else {
+                    html += '<button disabled style="width:100%;padding:8px;border-radius:6px;background:#333;border:none;color:#666;font-size:14px;cursor:not-allowed;">条件不足</button>';
+                }
+            }
+            html += '</div>';
 
         if (!isInFormation) {
             html += '<div style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.3);padding:12px;border-radius:8px;margin-bottom:16px;text-align:center;">';
@@ -237,6 +258,20 @@
             overlay.addEventListener('click', function (e) {
                 if (e.target === overlay) overlay.remove();
             });
+
+            var starUpBtn = document.getElementById('hero-star-up-btn');
+            if (starUpBtn) {
+                starUpBtn.onclick = function () {
+                    if (GameState.upgradeStar(heroId)) {
+                        window.showToast('升星成功！⭐' + (heroEntry.star || 1));
+                        overlay.remove();
+                        setTimeout(function () { showHeroDetail(heroId); }, 50);
+                        window.updateStatusBar();
+                    } else {
+                        window.showToast('升星失败');
+                    }
+                };
+            }
 
             if (!isInFormation) return;
 

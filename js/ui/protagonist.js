@@ -26,7 +26,7 @@
         var statsEl = document.getElementById('protagonist-stats');
 
         if (nameEl) nameEl.textContent = PROTAGONIST.name;
-        if (levelEl) levelEl.textContent = 'Lv.' + stats.level + ' · ' + PROTAGONIST.element + '属性';
+        if (levelEl) levelEl.textContent = 'Lv.' + stats.level + ' · ⭐' + (stats.star || 1) + ' · ' + PROTAGONIST.element + '属性';
 
         if (statsEl) {
             var html = '';

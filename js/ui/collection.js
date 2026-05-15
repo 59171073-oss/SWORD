@@ -84,6 +84,8 @@
             var maxLevel = GameState.getCardMaxLevel(card.type);
             var canUpgrade = card.count > 1 && card.level < maxLevel;
             var canSell = card.count > 0 && !isEquipped;
+            var canStar = card.type === 'hero' && GameState.canUpgradeStar(card.id);
+            var starText = card.type === 'hero' ? ' · ⭐' + (card.star || 1) : '';
 
             html += '<div class="collection-card" style="background:linear-gradient(180deg,#2a1a10,#1a0a05);border:2px solid ' + (rarityData ? rarityData.color : '#8b9dab') + ';border-radius:12px;padding:12px;text-align:center;' + (isEquipped ? 'opacity:0.7;' : '') + '">';
 
@@ -93,7 +95,7 @@
 
             html += '<div style="color:' + (rarityData ? rarityData.color : '#8b9dab') + ';font-size:12px;font-weight:bold;margin-bottom:4px;">' + (rarityData ? rarityData.name : '') + '</div>';
             html += '<div style="color:#f5e6c8;font-size:14px;font-weight:bold;margin-bottom:4px;">' + displayName + '</div>';
-            html += '<div style="color:#8b9dab;font-size:11px;margin-bottom:4px;">' + displayType + ' · Lv.' + card.level + '</div>';
+            html += '<div style="color:#8b9dab;font-size:11px;margin-bottom:4px;">' + displayType + ' · Lv.' + card.level + starText + '</div>';
             html += '<div style="color:#d4a017;font-size:11px;margin-bottom:8px;">x' + card.count + (isEquipped ? ' (已装备)' : '') + '</div>';
 
             if (description) {
@@ -103,6 +105,9 @@
             html += '<div style="display:flex;gap:6px;justify-content:center;">';
             if (canUpgrade) {
                 html += '<button class="btn-ancient coll-upgrade-btn" data-card-id="' + card.id + '" style="padding:4px 10px;font-size:11px;">升级</button>';
+            }
+            if (canStar) {
+                html += '<button class="btn-ancient coll-star-btn" data-card-id="' + card.id + '" style="padding:4px 10px;font-size:11px;background:linear-gradient(180deg,#d4a017,#b8860b);">升星</button>';
             }
             if (canSell) {
                 html += '<button class="btn-ancient coll-sell-btn" data-card-id="' + card.id + '" style="padding:4px 10px;font-size:11px;background:linear-gradient(180deg,#3d1a1a,#2a1010);">卖出</button>';
@@ -123,6 +128,20 @@
                     renderCollectionGrid();
                 } else {
                     window.showToast('升级失败');
+                }
+            };
+        }
+
+        var starBtns = grid.querySelectorAll('.coll-star-btn');
+        for (var i = 0; i < starBtns.length; i++) {
+            starBtns[i].onclick = function () {
+                var cardId = this.getAttribute('data-card-id');
+                if (GameState.upgradeStar(cardId)) {
+                    window.showToast('升星成功！');
+                    renderCollectionGrid();
+                    window.updateStatusBar();
+                } else {
+                    window.showToast('升星失败');
                 }
             };
         }

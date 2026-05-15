@@ -63,10 +63,22 @@ const GameState = {
                 this.state.firstGachaUsed = false;
                 this.save();
             }
+            this._migrateCollectionStar();
             this._migrateOldSlots();
         } else {
             this.newGame();
         }
+    },
+
+    _migrateCollectionStar() {
+        var collection = this.state.collection;
+        for (var id in collection) {
+            var entry = collection[id];
+            if (entry.type === 'hero' && entry.star === undefined) {
+                entry.star = 1;
+            }
+        }
+        this.save();
     },
 
     _migrateOldSlots() {
@@ -156,7 +168,8 @@ const GameState = {
                 type: type,
                 rarity: rarity,
                 level: 1,
-                count: 1
+                count: 1,
+                star: type === 'hero' ? 1 : undefined
             };
         }
         this.save();
@@ -189,6 +202,33 @@ const GameState = {
         return 5;
     },
 
+    getStarUpgradeCost(star) {
+        return { cardCount: 3, gold: 500 };
+    },
+
+    canUpgradeStar(cardId) {
+        const entry = this.state.collection[cardId];
+        if (!entry || entry.type !== 'hero') return false;
+        if ((entry.star || 1) >= 6) return false;
+        var requiredLevel = (entry.star || 1) * 10;
+        if (entry.level < requiredLevel) return false;
+        var cost = this.getStarUpgradeCost(entry.star || 1);
+        if (entry.count < cost.cardCount + 1) return false;
+        if (this.state.gold < cost.gold) return false;
+        return true;
+    },
+
+    upgradeStar(cardId) {
+        const entry = this.state.collection[cardId];
+        if (!this.canUpgradeStar(cardId)) return false;
+        var cost = this.getStarUpgradeCost(entry.star || 1);
+        entry.count -= cost.cardCount;
+        this.state.gold -= cost.gold;
+        entry.star = (entry.star || 1) + 1;
+        this.save();
+        return true;
+    },
+
     getHeroStats(heroInstanceId, formationContext) {
         const heroEntry = this.state.collection[heroInstanceId];
         if (!heroEntry || heroEntry.type !== 'hero') return null;
@@ -205,9 +245,10 @@ const GameState = {
             baseStats[stat] = Math.floor(classData.baseStats[stat] * multiplier);
         }
 
+        const starMultiplier = 1 + ((heroEntry.star || 1) - 1) * 0.25;
         const statsWithLevel = {};
         for (const stat in baseStats) {
-            statsWithLevel[stat] = Math.floor(baseStats[stat] * (1 + (heroEntry.level - 1) * 0.15));
+            statsWithLevel[stat] = Math.floor(baseStats[stat] * (1 + (heroEntry.level - 1) * 0.15) * starMultiplier);
         }
 
         const equipBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
@@ -407,12 +448,13 @@ const GameState = {
         const p = this.state.protagonist;
         const base = PROTAGONIST.baseStats;
         const levelMultiplier = 1 + (p.level - 1) * 0.15;
+        const starMultiplier = 1 + ((p.star || 1) - 1) * 0.25;
 
         const stats = {
-            hp: Math.floor(base.hp * levelMultiplier),
-            atk: Math.floor(base.atk * levelMultiplier),
-            def: Math.floor(base.def * levelMultiplier),
-            agi: Math.floor(base.agi * levelMultiplier)
+            hp: Math.floor(base.hp * levelMultiplier * starMultiplier),
+            atk: Math.floor(base.atk * levelMultiplier * starMultiplier),
+            def: Math.floor(base.def * levelMultiplier * starMultiplier),
+            agi: Math.floor(base.agi * levelMultiplier * starMultiplier)
         };
 
         const equipBonus = { hp: 0, atk: 0, def: 0, agi: 0 };
